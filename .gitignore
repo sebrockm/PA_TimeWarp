@@ -19,6 +19,7 @@ boost_1_48_0/*
 *.sln
 *.vcxproj*
 *.obj
+*.opensdf
 *.idb
 *.pdb
 *.tlog
