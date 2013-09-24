@@ -6,7 +6,7 @@ using namespace std;
 
 int main(){
 	StateQueue<Movable, 10> q;
-	for(int i=0;i<9;i++){
+	for(int i=0;i<10;i++){
 		Movable m(Vector3f(0,i,0));
 		m.timestamp = i/10.f;
 		q.push(m);
