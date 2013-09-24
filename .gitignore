@@ -24,6 +24,7 @@ boost_1_48_0/*
 *.pdb
 *.tlog
 *.log
+*.suo
 *.lastbuildstate
 *.unsuccessfulbuild
 *.cache
@@ -34,4 +35,5 @@ glew-1.8.0/*
 jpeg-9/*
 lib/*
 lib64/*
+ipch/*
 *.exe
