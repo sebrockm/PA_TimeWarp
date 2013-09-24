@@ -11,7 +11,7 @@
 #include <exception>
 
 
-int main(int argc, char** argv){
+int maina(int argc, char** argv){
 
 	std::cout.precision(3);
 

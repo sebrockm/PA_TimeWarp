@@ -21,6 +21,8 @@ public:
 
 	Material k;
 
+	f32 timestamp;
+
 	CUDA_CALLABLE_MEMBER Movable(const Vector3f& pos = Vector3f(), const f32& m = 1)
 	:x(pos),v(),/*a(0,-9.81f,0),*/m(m),phi(1,0,0,0),omega(),k(rubber){}
 
