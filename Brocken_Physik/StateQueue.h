@@ -15,24 +15,24 @@ private:
 public:
 	StateQueue():head(0), count(0), ar() {}
 
-	CUDA_CALLABLE_MEMBER const Body& top() const {
+	CUDA_CALLABLE_MEMBER const Body& front() const {
 		return ar[head];
 	}
 
-	CUDA_CALLABLE_MEMBER Body top() {
+	CUDA_CALLABLE_MEMBER Body front() {
 		return ar[head];
 	}
 
-	CUDA_CALLABLE_MEMBER Body pop() {
+	CUDA_CALLABLE_MEMBER Body peek() {
 		u32 tmp = head;
 		head = (head+1) % Size;
 		count--;
 		return ar[tmp];
 	}
 
-	CUDA_CALLABLE_MEMBER void push(const Body& b){
-		count++;
+	CUDA_CALLABLE_MEMBER void insert(const Body& b){
 		ar[(head+count)%Size] = b;
+		count++;
 	}
 
 	CUDA_CALLABLE_MEMBER bool empty() const {
