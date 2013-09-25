@@ -15,7 +15,7 @@
 class CollisionDetector{
 public:
 
-	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s1, const Sphere& s2, Vector3f& pt, Vector3f& n, f32& t) const{
+	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s1, const Sphere& s2, /*Vector3f& pt, Vector3f& n,*/ f32& t) const{
 		/* Berechnung der notwendigen Variablen */
 		Vector3f p12 = s1.x - s2.x;
 		Vector3f v12 = s1.v - s2.v;
@@ -30,10 +30,11 @@ public:
 		{
 			return false;
 		}
+		wurzel = sqrt(wurzel);
 
 		/* Berechnung des Zeitpunkts der Kollision */
-		f32 t1 = -p12v12/v12v12 + sqrt(wurzel)/v12v12;
-	    f32 t2 = -p12v12/v12v12 - sqrt(wurzel)/v12v12;
+		f32 t1 = (-p12v12 + wurzel)/v12v12;
+	    f32 t2 = (-p12v12 - wurzel)/v12v12;
 
 		/* Ausgabe */
 		if(t1 < 0 && t2 > 0)
@@ -56,38 +57,43 @@ public:
 		/* TODO */
 		//wenn der Abstand der nächsten Mittelpunkte kleiner ist als die beiden Radien,
 		//dann hat eine Kollision stattgefunden
-		f32 len = p12.length();
-		if(fLess(len, r)){
-			//darauf achten, dass die Kugeln sich aufeinander zu bewegen
-			n = (-p12).getNormalized();
-			Vector3f v = s2.v - s1.v;
-			//v = v.getParallelPartToNormal(n);
-			if(fLess(v*n, 0)){
-				pt = .5f*(s1.x+s2.x + (s1.r-s2.r)*n);
-				return true;
-			}
-		}
+		//f32 len = p12.length();
+		//if(fLess(len, r)){
+		//	//darauf achten, dass die Kugeln sich aufeinander zu bewegen
+		//	n = (-p12).getNormalized();
+		//	Vector3f v = s2.v - s1.v;
+		//	//v = v.getParallelPartToNormal(n);
+		//	if(fLess(v*n, 0)){
+		//		pt = .5f*(s1.x+s2.x + (s1.r-s2.r)*n);
+		//		return true;
+		//	}
+		//}
 
-		return false;
+		//return false;
+		return true;
 	}
 
 
-	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, Vector3f& pt) const{
-		f32 d = p.orientatedDistanceTo(s.x);
-		if(abs(d) < s.r){
-			//darauf achten, dass sich die Kugel auf die Ebene zu bewegt
-			//Vector3f v = s.v.getParallelPartToNormal(p.n);
-			if(fLess(d * (s.v*p.n), 0)){
-				pt = s.x - d*p.n;
-				return true;
-			}
-		}
+	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, /*Vector3f& pt*/ f32& t) const{
 		
-		return false;
+		//f32 d = p.orientatedDistanceTo(s.x);
+		//if(abs(d) < s.r){
+		//	//darauf achten, dass sich die Kugel auf die Ebene zu bewegt
+		//	//Vector3f v = s.v.getParallelPartToNormal(p.n);
+		//	if(fLess(d * (s.v*p.n), 0)){
+		//		pt = s.x - d*p.n;
+		//		return true;
+		//	}
+		//}
+		//
+		//return false;
+
+		t = ((p.orientatedDistanceTo(s.x)>0 ? s.r : -s.r) + p.d - s.x*p.n) / (s.v*p.n);
+		return t > 0;
 	}
 
-	CUDA_CALLABLE_MEMBER bool operator () (const Plane& p, const Sphere& s, Vector3f& pt) const{
-		return operator () (s, p, pt);
+	CUDA_CALLABLE_MEMBER bool operator () (const Plane& p, const Sphere& s, /*Vector3f& pt*/ f32& t) const{
+		return operator () (s, p, t);
 	}
 
 
