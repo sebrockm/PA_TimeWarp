@@ -15,17 +15,51 @@
 class CollisionDetector{
 public:
 
-	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s1, const Sphere& s2, Vector3f& pt, Vector3f& n) const{
-
-		n = s2.x - s1.x;	
+	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s1, const Sphere& s2, Vector3f& pt, Vector3f& n, f32& t) const{
+		/* Berechnung der notwendigen Variablen */
+		Vector3f p12 = s1.x - s2.x;
+		Vector3f v12 = s1.v - s2.v;
+		f32 p12v12 = p12 * v12;
+		f32 v12v12 = v12 * v12;
+		f32 p12p12 = p12 * p12;
 		f32 r = s1.r + s2.r;
-		
+		f32 wurzel = p12v12 * p12v12 + v12v12 * r - v12v12 * p12p12;
+
+		/* Kontrolle */
+		if(wurzel < 0)
+		{
+			return false;
+		}
+
+		/* Berechnung des Zeitpunkts der Kollision */
+		f32 t1 = -p12v12/v12v12 + sqrt(wurzel)/v12v12;
+	    f32 t2 = -p12v12/v12v12 - sqrt(wurzel)/v12v12;
+
+		/* Ausgabe */
+		if(t1 < 0 && t2 > 0)
+		{
+			t = t2;
+		}
+		else if(t2 < 0 && t1 > 0)
+		{
+			t = t1;
+		}
+		else if(t2 < 0 && t1 < 0)
+		{
+			return false;
+		}
+		else if(t2 > 0 && t1 > 0)
+		{
+			t = min(t1, t2);
+		}
+
+		/* TODO */
 		//wenn der Abstand der nächsten Mittelpunkte kleiner ist als die beiden Radien,
 		//dann hat eine Kollision stattgefunden
-		f32 len = n.length();
+		f32 len = p12.length();
 		if(fLess(len, r)){
 			//darauf achten, dass die Kugeln sich aufeinander zu bewegen
-			n = n.getNormalized();
+			n = (-p12).getNormalized();
 			Vector3f v = s2.v - s1.v;
 			//v = v.getParallelPartToNormal(n);
 			if(fLess(v*n, 0)){
