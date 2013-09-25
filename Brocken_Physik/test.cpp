@@ -10,7 +10,7 @@ struct Test{
 
 int main(){
 	StateQueue<Test, 10> q;
-	for(int i=0;i<9;i++){
+	for(int i=0;i<10;i++){
 		Test m;
 		m.timestamp = 2*i;
 		q.insert(m);

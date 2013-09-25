@@ -72,7 +72,7 @@ public:
 			}
 		}
 
-		return first;
+		return (first + Size - head) % Size;
 	}
 
 };
