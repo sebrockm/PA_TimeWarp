@@ -18,6 +18,14 @@ public:
 	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s1, const Sphere& s2, /*Vector3f& pt, Vector3f& n,*/ f32& t) const{
 		/* Berechnung der notwendigen Variablen */
 		Vector3f p12 = s1.x - s2.x;
+		f32 tdiff = s1.timestamp - s2.timestamp;
+		if(tdiff > 0){
+			p12 -= tdiff*s2.v;
+		}
+		else{
+			p12 -= tdiff*s1.v;
+		}
+
 		Vector3f v12 = s1.v - s2.v;
 		f32 p12v12 = p12 * v12;
 		f32 v12v12 = v12 * v12;
@@ -53,6 +61,7 @@ public:
 		{
 			t = min(t1, t2);
 		}
+		return true;
 
 		/* TODO */
 		//wenn der Abstand der nächsten Mittelpunkte kleiner ist als die beiden Radien,
@@ -70,7 +79,6 @@ public:
 		//}
 
 		//return false;
-		return true;
 	}
 
 

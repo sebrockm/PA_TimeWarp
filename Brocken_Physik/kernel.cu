@@ -3,6 +3,50 @@
 #include "CollisionDetector.h"
 #include "CollisionHandler.h"
 
+#include "StateQueue.h"
+#include "Heap.h"
+#include "MessageControllSystem.h"
+
+
+__global__ void handleNextMessages(...){...}
+
+//das ist jetzt neu
+__global__ void timeWarpSphereKernel(Plane* planes, u32 planeCount,
+	StateQueue<Sphere, QL>* spheres, u32 sphereCount, 
+	Heap<Message, 20>* inputQs, f32 tmin)
+{
+	int id = threadIdx.x + blockIdx.x*blockDim.x;
+	CollisionDetector cd;
+	f32 t;
+	f32 lvt = spheres[id].back().timestamp;
+
+	for(u32 i = 0; i < planeCount; i++){
+		if(cd(spheres[id].back(), planes[id], t)){
+			tmin = min(t, tmin);
+		}
+	}
+
+	for(u32 i = 0; i < sphereCount; i++){
+		if(i != id){
+			for(u32 j = sqheres[i].searchNext(lvt); j < spheres[i].length(); j++){
+				if(cd(spheres[id].back(), spheres[i].get(j), t)){
+					tmin = min(t, tmin);
+					break;
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -5,6 +5,10 @@
 #include "cuda_macro.h"
 #include "types.h"
 
+
+const u32 QL = 20;
+
+
 template <class Body, u32 Size>
 class StateQueue{
 private:
@@ -21,6 +25,14 @@ public:
 
 	CUDA_CALLABLE_MEMBER Body front() {
 		return ar[head];
+	}
+
+	CUDA_CALLABLE_MEMBER const Body& back() const {
+		return ar[(head+count-1)%Size];
+	}
+
+	CUDA_CALLABLE_MEMBER Body back() {
+		return ar[(head+count-1)%Size];
 	}
 
 	CUDA_CALLABLE_MEMBER Body peek() {
