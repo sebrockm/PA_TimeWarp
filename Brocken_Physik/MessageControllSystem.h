@@ -14,8 +14,30 @@ struct Message{
 	f32 timestamp;
 	u32 src, dest;
 
+	CUDA_CALLABLE_MEMBER bool operator < (const Message& b) const {
+		if(timestamp < b.timestamp)
+			return true;
+		if(timestamp == b.timestamp){
+			if(src < b.src)
+				return true;
+			if(src == b.src){
+				return (type == event && b.type == antievent) || 
+					(type == eventAck && b.type == antieventAck);
+			}
+		}
+		return false;
+	}
+
+	CUDA_CALLABLE_MEMBER bool checkPair(const Message& other) const {
+		if(timestamp == other.timestamp && src == other.src && dest == other.dest){
+			return type == event && other.type == antievent || type == antievent && other.type == event ||
+				type == eventAck && other.type == antieventAck || type == antieventAck && other.type == eventAck;
+		}
+		return false;
+	}
+
 	CUDA_CALLABLE_MEMBER bool operator == (const Message& other) const {
-		return timestamp == other.timestamp && src == other.src && dest == other.dest;
+		return timestamp == other.timestamp && src == other.src && dest == other.dest && type == other.type;
 	}
 
 	CUDA_CALLABLE_MEMBER bool operator != (const Message& other) const {
@@ -43,6 +65,7 @@ public:
 		for(u32 i = 0; i < sphereCount; i++){
 			if(mailboxes[i].type != Message::mull && mailboxes[i].dest == id){
 				inputQueues[id].insert(mailboxes[i]);
+				mailboxes[i].type = Message::mull;
 			}
 		}
 	}

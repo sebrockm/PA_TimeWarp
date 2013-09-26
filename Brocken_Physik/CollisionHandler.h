@@ -241,6 +241,52 @@ public:
 			- s.v;
 	}
 
+
+
+	CUDA_CALLABLE_MEMBER void operator () (
+		Sphere& s1, const Sphere& s2) const
+	{
+		Vector3f n = (s2.x-s1.x).getNormalized();
+
+		//Teile der Geschwindigkeiten, die senkrecht zur Berührebene liegen
+		Vector3f v1Orth = s1.v.getParallelPartToNormal(n);
+		Vector3f v2Orth = s2.v.getParallelPartToNormal(n);
+
+		//Parallelteile
+		Vector3f v1Par = s1.v - v1Orth;
+		Vector3f v2Par = s2.v - v2Orth;
+
+		//Teile der Rotationsgeschwindigkeiten, die senkrecht zur Berührebene liegen
+		Vector3f omega1Orth = s1.omega.getParallelPartToNormal(n);
+
+		//und die Parallelteile
+		Vector3f omega1Par = s1.omega - omega1Orth;
+
+		//Koeffizienten abhängig von den Materialien
+		f32 res = resCoef[s1.k][s2.k];
+		f32 mue = staticFricCoef[s1.k][s2.k];
+
+		//Radius als Vektoren
+		Vector3f r1 = n * s1.r;
+
+		//neue Parallelteile der Rotationen
+		Vector3f omegaParNeu = (1.f-5.f/7*mue) * omega1Par - 
+			5.f/7*mue / (s1.r*s1.r) * r1.crossProduct(v1Par);
+
+		//neue Winkelgeschwindigkeiten
+		s1.omega = omegaParNeu + /*res **/ omega1Orth;
+
+		Vector3f tmpv = s1.m*v1Orth + s2.m*v2Orth;
+		f32 m = s1.m + s2.m;
+
+		//neue Geschwindigkeiten
+		s1.v = (tmpv - res * s2.m * (v1Orth-v2Orth)) / m //neuer Orthogonalteil
+			+ (1-mue) * v1Par + crossProduct((1-mue)*omega1Par-omegaParNeu, r1); //neuer Parallelteil;
+	}
+
+
+
+
 	CUDA_CALLABLE_MEMBER void operator () (
 		const Sphere& s1, const Sphere& s2, 
 		const Vector3f& pt, const Vector3f& n,

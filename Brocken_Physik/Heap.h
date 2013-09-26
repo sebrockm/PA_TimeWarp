@@ -5,6 +5,7 @@
 #include "Array.h"
 #include "cuda_macro.h"
 #include "types.h"
+#include "MessageControllSystem.h"
 
 
 template <class T, u32 Size>
@@ -25,7 +26,7 @@ public:
 		ar[id] = t;
 		while(id > 0){
 			u32 father = (id-1)/2;
-			if(ar[id].timestamp < ar[father].timestamp){
+			if(ar[id] < ar[father]){
 				T tmp = ar[id];
 				ar[id] = ar[father];
 				ar[father] = tmp;
@@ -42,20 +43,25 @@ public:
 	}
 
 	T peek(){
-		count--;
 		T erg = ar[0];
-		ar[0] = ar[count-1];
+		ar[0] = ar[--count];
 		u32 id = 0;
 		u32 left = 1;
-		while(id < count && (ar[id].timestamp > ar[left].timestamp || ar[id].timestamp > ar[left+1].timestamp)){
-			u32 tausch = left;
-			if(ar[left].timestamp > ar[right].timestamp){
-				tausch++;
+		while(left < count){//solange linker Sohn vorhanden
+			if(ar[left] < ar[id] || left+1 < count && ar[left+1] < ar[id]){
+				u32 tausch = left;
+				if(left+1 < count && ar[left+1] < ar[left]){
+					tausch++;
+				}
+				T tmp = ar[id];
+				ar[id] = ar[tausch];
+				ar[tausch] = ar[id];
+				id = tausch;
+				left = id*2 + 1;
 			}
-			T tmp = ar[id];
-			ar[id] = ar[tausch];
-			ar[tausch] = ar[id];
-			id = tausch;
+			else{
+				break;
+			}		
 		}
 		return erg;
 	}

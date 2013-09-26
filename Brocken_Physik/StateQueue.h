@@ -65,7 +65,7 @@ public:
 
 	// naechst groesseres als t finden
 	// falls es keinen groesseren als t gibt, wird Size zurueckgegeben
-	CUDA_CALLABLE_MEMBER u32 searchNext(f32 t) const {		
+	CUDA_CALLABLE_MEMBER u32 searchNext(f32 t) const {		//AENDERN IN searchBefore oder so!!!!!
 		u32 first = head;
 		u32 last = (head + count - 1) % Size;
 

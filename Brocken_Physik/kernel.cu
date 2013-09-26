@@ -8,7 +8,70 @@
 #include "MessageControllSystem.h"
 
 
-__global__ void handleNextMessages(...){...}
+__global__ void handleNextMessages(
+	StateQueue<Sphere, QL>* spheres, 
+	Heap<Message, 20>* inputQs, 
+	StateQueue<Message, 20>* doneQs,
+	u32 sphereCount)
+{
+	int id = threadIdx.x + blockIdx.x*blockDim.x;
+	f32 lvt = spheres[id].back().timestamp;
+
+	if(id >= sphereCount)
+		return;
+
+	Message msg;
+	msg.type = Message::mull;
+
+	//naechste Message suchen, die sich nicht irgendwie aufloest
+	while(inputQs[id].length() > 0){
+		msg = inputQs[id].peek();
+		if(inputQs[id].length() > 0){
+			if(msg.checkPair(inputQs[id].top())){
+				inputQs[id].peek();
+				if(inputQs[id].length() > 0){
+					msg = inputQs[id].peek();
+				}
+				else{
+					msg.type = Message::mull;
+				}
+			}
+			else if(msg == inputQs[id].top()){
+				inputQs[id].peek();
+			}
+			else{
+				break;
+			}
+		}
+	}
+
+	switch(msg.type)
+	{
+	case Message::event:
+		if(lvt >= msg.timestamp){ //boese
+			
+		}
+		else{ //neuer state		
+			Sphere neu = spheres[id].back();
+			neu.x += neu.v * (msg.timestamp-neu.timestamp);
+			neu.phi = createRotationQuaternion(neu.omega.length()*(msg.timestamp-neu.timestamp), neu.omega.getNormalized()) * neu.phi;
+			neu.timestamp = msg.timestamp;
+
+			Sphere other = spheres[msg.src].get(spheres[msg.src].searchNext(neu.timestamp));
+			other.x += other.v * (msg.timestamp-other.timestamp);
+			other.phi = createRotationQuaternion(other.omega.length()*(msg.timestamp-other.timestamp), other.omega.getNormalized()) * other.phi;
+			other.timestamp = msg.timestamp;
+
+			CollisionHandler ch;
+			ch(neu, other);//new ist jetzt kollidiert
+		} 
+		break;
+
+	case Message::antievent:
+	case Message::eventAck:
+	case Message::antieventAck:
+	}
+}
 
 //das ist jetzt neu
 __global__ void timeWarpSphereKernel(Plane* planes, u32 planeCount,
