@@ -1,4 +1,4 @@
-#include "StateQueue.h"
+#include "Queue.h"
 #include "Movable.h"
 
 #include <iostream>
@@ -9,7 +9,7 @@ struct Test{
 };
 
 int main(){
-	StateQueue<Test, 10> q;
+	Queue<Test, 10> q;
 	for(int i=0;i<10;i++){
 		Test m;
 		m.timestamp = 2*i;

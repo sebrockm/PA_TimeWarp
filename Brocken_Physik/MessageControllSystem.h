@@ -1,6 +1,6 @@
 #include "types.h"
 #include "cuda_macro.h"
-#include "StateQueue.h"
+#include "Queue.h"
 #include "Heap.h"
 
 struct Message{

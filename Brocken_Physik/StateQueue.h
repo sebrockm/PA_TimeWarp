@@ -1,5 +1,5 @@
-#ifndef _STATEQUEUE_H_
-#define _STATEQUEUE_H_
+#ifndef _Queue_H_
+#define _Queue_H_
 
 #include "Array.h"
 #include "cuda_macro.h"
@@ -10,14 +10,14 @@ const u32 QL = 20;
 
 
 template <class Body, u32 Size>
-class StateQueue{
+class Queue{
 private:
 	Array<Body, Size> ar;
 	u32 head;//Index vom ersten belegten
 	u32 count;
 
 public:
-	StateQueue():head(0), count(0), ar() {}
+	Queue():head(0), count(0), ar() {}
 
 	CUDA_CALLABLE_MEMBER const Body& front() const {
 		return ar[head];

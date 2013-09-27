@@ -3,15 +3,15 @@
 #include "CollisionDetector.h"
 #include "CollisionHandler.h"
 
-#include "StateQueue.h"
+#include "Queue.h"
 #include "Heap.h"
 #include "MessageControllSystem.h"
 
 
 __global__ void handleNextMessages(
-	StateQueue<Sphere, QL>* spheres, 
+	Queue<Sphere, QL>* spheres, 
 	Heap<Message, 20>* inputQs, 
-	StateQueue<Message, 20>* doneQs,
+	Queue<Message, 20>* doneQs,
 	u32 sphereCount)
 {
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
@@ -75,7 +75,7 @@ __global__ void handleNextMessages(
 
 //das ist jetzt neu
 __global__ void timeWarpSphereKernel(Plane* planes, u32 planeCount,
-	StateQueue<Sphere, QL>* spheres, u32 sphereCount, 
+	Queue<Sphere, QL>* spheres, u32 sphereCount, 
 	Heap<Message, 20>* inputQs, f32 tmin)
 {
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
