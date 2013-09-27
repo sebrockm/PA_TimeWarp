@@ -36,6 +36,17 @@ struct Message{
 		return false;
 	}
 
+	CUDA_CALLABLE_MEMBER Message createAnti() const {
+		Message anti = *this;
+		switch(anti.type){
+		case event: anti.type = antievent; break;
+		case antievent: anti.type = event; break;
+		case eventAck: anti.type = antieventAck; break;
+		case antieventAck: anti.type = eventAck; break;
+		}
+		return anti;
+	}
+
 	CUDA_CALLABLE_MEMBER bool operator == (const Message& other) const {
 		return timestamp == other.timestamp && src == other.src && dest == other.dest && type == other.type;
 	}
@@ -50,22 +61,24 @@ class MessageControllSystem{
 
 private:
 	Heap<Message, 20>* inputQueues;
-	Message* mailboxes;
+	Queue<Message, 20>* mailboxes;
 	u32 sphereCount;
 
 public:
-	CUDA_CALLABLE_MEMBER MessageControllSystem(Heap<Message, 20>* q, Message* mb, u32 sc):inputQueues(q), mailboxes(mb), sphereCount(sc) {}
+	CUDA_CALLABLE_MEMBER MessageControllSystem(Heap<Message, 20>* q, Queue<Message, 20>* mb, u32 sc):inputQueues(q), mailboxes(mb), sphereCount(sc) {}
 
 	CUDA_CALLABLE_MEMBER void send(const Message& msg){
-		mailboxes[msg.src] = msg;
+		mailboxes[msg.src].insert(msg);
 	}
 
 	CUDA_CALLABLE_MEMBER void recv(){
 		u32 id = threadIdx.x + blockIdx.x*blockDim.x;
 		for(u32 i = 0; i < sphereCount; i++){
-			if(mailboxes[i].type != Message::mull && mailboxes[i].dest == id){
-				inputQueues[id].insert(mailboxes[i]);
-				mailboxes[i].type = Message::mull;
+			for(u32 j = 0; j < mailboxes[i].length(); j++){
+				if(mailboxes[i][j].type != Message::mull && mailboxes[i][j].dest == id){
+					inputQueues[id].insert(mailboxes[i][j]);
+					//mailboxes[i][j].type = Message::mull;
+				}
 			}
 		}
 	}

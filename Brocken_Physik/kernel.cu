@@ -8,14 +8,16 @@
 #include "MessageControllSystem.h"
 
 
-__global__ void handleNextMessages(
-	Queue<Sphere, QL>* spheres, 
+__global__ void handleNextMessage(
+	Queue<Sphere, QL>* stateQs, 
 	Heap<Message, 20>* inputQs, 
-	Queue<Message, 20>* doneQs,
+	//Queue<Message, 20>* doneQs,
+	Queue<Message, 20>* outputQs,
+	Queue<Message, 20>* mailboxes,//nur fuers Senden
 	u32 sphereCount)
 {
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
-	f32 lvt = spheres[id].back().timestamp;
+	f32 lvt = stateQs[id].back().timestamp;
 
 	if(id >= sphereCount)
 		return;
@@ -48,61 +50,138 @@ __global__ void handleNextMessages(
 	switch(msg.type)
 	{
 	case Message::event:
-		if(lvt >= msg.timestamp){ //boese
+	{
+		if(msg.timestamp < lvt){
+			lvt = msg.timestamp;
 			
+			//rollback
+			stateQs[id].deleteAllGreaterThan(lvt);
+			//doneQs[id].deleteAllGreaterThan(lvt);
+			MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
+
+			u32 pos = outputQs[id].searchFirstBefore(msg) + 1;
+			for(int i = pos; i < outputQs[id].length(); i++){
+				mcs.send(outputQs[id][i]);
+			}
+			outputQs[id].deleteAllAfterEq(pos);
+
 		}
-		else{ //neuer state		
-			Sphere neu = spheres[id].back();
-			neu.x += neu.v * (msg.timestamp-neu.timestamp);
-			neu.phi = createRotationQuaternion(neu.omega.length()*(msg.timestamp-neu.timestamp), neu.omega.getNormalized()) * neu.phi;
-			neu.timestamp = msg.timestamp;
+		
+		//neuer state		
+		Sphere neu = stateQs[id].back();
+		neu.x += neu.v * (msg.timestamp-neu.timestamp);
+		neu.phi = createRotationQuaternion(neu.omega.length()*(msg.timestamp-neu.timestamp), neu.omega.getNormalized()) * neu.phi;
+		neu.timestamp = msg.timestamp - EPSILON; //FIXME ist das so sinnvoll?
+		neu.partner = msg.src;
+		stateQs[id].insert(neu); //Zustand unmittelbar vor der Kollision
 
-			int sid = spheres[msg.src].searchFirstBefore(neu);
-			if(sid < 0)
-				printf("Kollisionspartner ist weg :(\n");
+		neu.timestamp = msg.timestamp;
+		int sid = stateQs[msg.src].searchFirstBefore(neu);
+		if(sid < 0){
+			printf("Kollisionspartner ist weg :(\n");
+			break;
+		}
 
-			Sphere other = spheres[msg.src][sid];
-			other.x += other.v * (msg.timestamp-other.timestamp);
-			other.phi = createRotationQuaternion(other.omega.length()*(msg.timestamp-other.timestamp), other.omega.getNormalized()) * other.phi;
-			other.timestamp = msg.timestamp;
+		Sphere other = stateQs[msg.src][sid];
 
-			CollisionHandler ch;
-			ch(neu, other);//neu ist jetzt kollidiert
-		} 
+		CollisionHandler ch;
+		ch(neu, other);//neu ist jetzt kollidiert
+		stateQs[id].insert(neu); //Zustand unmittelbar nach der Kollision
+
 		break;
+	}
 
 	case Message::antievent:
-	case Message::eventAck:
-	case Message::antieventAck:
+	{
+		int sid = stateQs[id].searchFirstBefore(msg.timestamp) + 1;
+		while(stateQs[id][sid].timestamp == msg.timestamp){//suche state der antimessage
+			if(stateQs[id][sid].partner == msg.src && stateQs[id][sid+1].timestamp == msg.timestamp){//swape gefundenen state mit gleichen timestamps darueber
+				Sphere tmp = stateQs[id][sid];
+				stateQs[id][sid] = stateQs[id][sid+1];
+				stateQs[id][sid+1] = tmp;
+			}
+			sid++;
+		}
+		sid--;
+
+		if(stateQs[id][sid].timestamp == msg.timestamp && stateQs[id][sid].partner == msg.src){
+			stateQs[id].deleteAllAfterEq(sid);
+
+			MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
+
+			u32 pos = outputQs[id].searchFirstBefore(msg) + 1;
+			for(int i = pos; i < outputQs[id].length(); i++){
+				mcs.send(outputQs[id][i]);
+			}
+			outputQs[id].deleteAllAfterEq(pos);
+		}
+		else{
+			//printf("state zum antievent nicht vorhanden\n");
+		}
+		break;
 	}
+
+	case Message::eventAck:break;
+	case Message::antieventAck:break;
+	}
+
+	//doneQs[id].insert(msg);
 }
 
-//das ist jetzt neu
-__global__ void timeWarpSphereKernel(Plane* planes, u32 planeCount,
-	Queue<Sphere, QL>* spheres, u32 sphereCount, 
-	Heap<Message, 20>* inputQs, f32 tmin)
+
+__global__ void receiveFromMailboxes( 
+	Heap<Message, 20>* inputQs, 
+	Queue<Message, 20>* mailboxes,//nur fuers Empfangen
+	u32 sphereCount)
+{
+	int id = threadIdx.x + blockIdx.x*blockDim.x;
+	if(id >= sphereCount)
+		return;
+
+	MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
+
+	mcs.recv();
+}
+
+
+
+__global__ void detectCollisions(
+	Plane* planes, u32 planeCount,
+	Queue<Message, 20>* mailboxes,//nur fuers Senden
+	Queue<Sphere, QL>* stateQs, u32 sphereCount, 
+	f32 tmin)
 {
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
 	CollisionDetector cd;
 	f32 t;
-	f32 lvt = spheres[id].back().timestamp;
+	f32 lvt = stateQs[id].back().timestamp;
 
+	u32 partner;
+	bool nextIsPlane = false;
 	for(u32 i = 0; i < planeCount; i++){
-		if(cd(spheres[id].back(), planes[id], t)){
-			tmin = min(t, tmin);
+		if(cd(stateQs[id].back(), planes[i], t)){
+			if(t < tmin){
+				partner = i;
+				tmin = t;
+				nextIsPlane = true;
+			}
 		}
 	}
 
 	for(u32 i = 0; i < sphereCount; i++){
-		if(i != id){
-			for(u32 j = spheres[i].searchFirstBefore(spheres[id].back()); j < spheres[i].length(); j++){
-				if(cd(spheres[id].back(), spheres[i][j], t)){
-					tmin = min(t, tmin);
-					break;
+		for(u32 j = stateQs[i].searchFirstBefore(stateQs[id].back()); j < stateQs[i].length(); j++){
+			if(cd(stateQs[id].back(), stateQs[i][j], t)){
+				if(t < tmin){
+					partner = i;
+					tmin = t;
+					nextIsPlane = false;
 				}
 			}
 		}
 	}
+
+
+	//TODO senden
 }
 
 

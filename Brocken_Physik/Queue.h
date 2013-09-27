@@ -23,7 +23,7 @@ public:
 		return ar[head];
 	}
 
-	CUDA_CALLABLE_MEMBER Body front() {
+	CUDA_CALLABLE_MEMBER Body& front() {
 		return ar[head];
 	}
 
@@ -31,7 +31,7 @@ public:
 		return ar[(head+count-1)%Size];
 	}
 
-	CUDA_CALLABLE_MEMBER Body back() {
+	CUDA_CALLABLE_MEMBER Body& back() {
 		return ar[(head+count-1)%Size];
 	}
 
@@ -91,6 +91,33 @@ public:
 		return first - 1;
 	}
 
+	CUDA_CALLABLE_MEMBER int searchFirstBefore(f32 t) const {
+		int first = 0;
+		int last = count - 1;
+
+		while(first < last){
+			u32 middle = (first + last) / 2;
+
+			if((*this)[middle].timestamp < t){ //in hinterer Haelfte weitersuchen, middle kann nicht das gesuchte sein
+				first = middle + 1;
+			}
+			else{ //in vorderer Haelfte weitersuchen, middle koennte das gesuchte sein
+				last = middle;
+			}
+		}
+
+		return first - 1;
+	}
+
+	CUDA_CALLABLE_MEMBER void deleteAllGreaterThan(f32 t) {
+		Body b;
+		b.timestamp = t;
+		count = searchFirstBefore(b) + 1;
+	}
+
+	CUDA_CALLABLE_MEMBER void deleteAllAfterEq(u32 pos) {
+		count = pos;
+	}
 };
 
 

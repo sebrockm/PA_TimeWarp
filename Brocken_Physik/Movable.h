@@ -22,13 +22,14 @@ public:
 	Material k;
 
 	f32 timestamp;
+	int partner;
 
 	bool operator < (const Movable& other) const {
 		return timestamp < other.timestamp;
 	}
 
 	CUDA_CALLABLE_MEMBER Movable(const Vector3f& pos = Vector3f(), const f32& m = 1)
-	:x(pos),v(),/*a(0,-9.81f,0),*/m(m),phi(1,0,0,0),omega(),k(rubber){}
+	:x(pos),v(),/*a(0,-9.81f,0),*/m(m),phi(1,0,0,0),omega(),k(rubber),timestamp(0),partner(-1){}
 
 	CUDA_CALLABLE_MEMBER void move(f32 dt){
 		v[1] -= 9.81f*dt;

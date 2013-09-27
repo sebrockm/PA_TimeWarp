@@ -30,6 +30,9 @@ public:
 		Vector3f v12 = s1.v - s2.v;
 		f32 p12v12 = p12 * v12;
 		f32 v12v12 = v12 * v12;
+		if(v12v12 == 0.f)
+			return false;
+
 		f32 p12p12 = p12 * p12;
 		f32 r = s1.r + s2.r;
 		f32 wurzel = p12v12 * p12v12 + v12v12 * r - v12v12 * p12p12;
