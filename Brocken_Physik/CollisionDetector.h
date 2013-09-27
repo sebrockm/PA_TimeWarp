@@ -14,6 +14,7 @@
 
 class CollisionDetector{
 public:
+	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s1, const Sphere& s2, Vector3f& pt, Vector3f& n) const{return false;}
 
 	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s1, const Sphere& s2, /*Vector3f& pt, Vector3f& n,*/ f32& t) const{
 		/* Berechnung der notwendigen Variablen */
@@ -99,6 +100,8 @@ public:
 		t = ((p.orientatedDistanceTo(s.x)>0 ? s.r : -s.r) + p.d - s.x*p.n) / (s.v*p.n);
 		return t > 0;
 	}
+
+	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, Vector3f& pt) const{return false;}
 
 	CUDA_CALLABLE_MEMBER bool operator () (const Plane& p, const Sphere& s, /*Vector3f& pt*/ f32& t) const{
 		return operator () (s, p, t);

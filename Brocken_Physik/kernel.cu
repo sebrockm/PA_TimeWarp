@@ -57,13 +57,17 @@ __global__ void handleNextMessages(
 			neu.phi = createRotationQuaternion(neu.omega.length()*(msg.timestamp-neu.timestamp), neu.omega.getNormalized()) * neu.phi;
 			neu.timestamp = msg.timestamp;
 
-			Sphere other = spheres[msg.src].get(spheres[msg.src].searchNext(neu.timestamp));
+			int sid = spheres[msg.src].searchFirstBefore(neu);
+			if(sid < 0)
+				printf("Kollisionspartner ist weg :(\n");
+
+			Sphere other = spheres[msg.src][sid];
 			other.x += other.v * (msg.timestamp-other.timestamp);
 			other.phi = createRotationQuaternion(other.omega.length()*(msg.timestamp-other.timestamp), other.omega.getNormalized()) * other.phi;
 			other.timestamp = msg.timestamp;
 
 			CollisionHandler ch;
-			ch(neu, other);//new ist jetzt kollidiert
+			ch(neu, other);//neu ist jetzt kollidiert
 		} 
 		break;
 
@@ -91,8 +95,8 @@ __global__ void timeWarpSphereKernel(Plane* planes, u32 planeCount,
 
 	for(u32 i = 0; i < sphereCount; i++){
 		if(i != id){
-			for(u32 j = sqheres[i].searchNext(lvt); j < spheres[i].length(); j++){
-				if(cd(spheres[id].back(), spheres[i].get(j), t)){
+			for(u32 j = spheres[i].searchFirstBefore(spheres[id].back()); j < spheres[i].length(); j++){
+				if(cd(spheres[id].back(), spheres[i][j], t)){
 					tmin = min(t, tmin);
 					break;
 				}

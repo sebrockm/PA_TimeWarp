@@ -59,32 +59,36 @@ public:
 		return count;
 	}
 
-	CUDA_CALLABLE_MEMBER Body get(u32 pos) const {
+	CUDA_CALLABLE_MEMBER u32 size() const {
+		return Size;
+	}
+
+	CUDA_CALLABLE_MEMBER const Body& operator [] (u32 pos) const {
 		return ar[(head+pos)%Size];
 	}
 
-	// naechst groesseres als t finden
-	// falls es keinen groesseren als t gibt, wird Size zurueckgegeben
-	CUDA_CALLABLE_MEMBER u32 searchNext(f32 t) const {		//AENDERN IN searchBefore oder so!!!!!
-		u32 first = head;
-		u32 last = (head + count - 1) % Size;
+	CUDA_CALLABLE_MEMBER Body& operator [] (u32 pos) {
+		return ar[(head+pos)%Size];
+	}
 
-		if(ar[last].timestamp < t) // gibt es ueberhaupt einen groesseren?
-			return Size;
+	// Index des naechst kleineren als b finden
+	// falls es keinen kleineren als b gibt, wird -1 zurueckgegeben
+	CUDA_CALLABLE_MEMBER int searchFirstBefore(const Body& b) const {
+		int first = 0;
+		int last = count - 1;
 
-		while(last != first){
-			u32 middle = first + last + (first>last) * Size;
+		while(first < last){
+			u32 middle = (first + last) / 2;
 
-			middle = (middle / 2) % Size;
-			if(t < ar[middle].timestamp){ //in vorderer Haelfte weitersuchen, middle koennte das gesuchte sein
-				last = middle;
+			if((*this)[middle] < b){ //in hinterer Haelfte weitersuchen, middle kann nicht das gesuchte sein
+				first = middle + 1;
 			}
-			else{ //in hinterer Haelfte weitersuchen, middle kann nicht das gesuchte sein
-				first = (middle+1) % Size;
+			else{ //in vorderer Haelfte weitersuchen, middle koennte das gesuchte sein
+				last = middle;
 			}
 		}
 
-		return (first + Size - head) % Size;
+		return first - 1;
 	}
 
 };

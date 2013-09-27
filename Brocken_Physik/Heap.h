@@ -5,7 +5,6 @@
 #include "Array.h"
 #include "cuda_macro.h"
 #include "types.h"
-#include "MessageControllSystem.h"
 
 
 template <class T, u32 Size>
@@ -15,14 +14,22 @@ private:
 	u32 count;
 
 public:
-	Heap():ar(), count(0){}
+	CUDA_CALLABLE_MEMBER Heap():ar(), count(0){}
 
-	u32 length() const {
+	CUDA_CALLABLE_MEMBER u32 length() const {
 		return count;
 	}
 
-	void insert(const T& t){
-		u32 id = length++;
+	CUDA_CALLABLE_MEMBER bool empty() const {
+		return count == 0;
+	}
+
+	CUDA_CALLABLE_MEMBER bool full() const {
+		return count == Size;
+	}
+
+	CUDA_CALLABLE_MEMBER void insert(const T& t){
+		u32 id = count++;
 		ar[id] = t;
 		while(id > 0){
 			u32 father = (id-1)/2;
@@ -38,11 +45,11 @@ public:
 		}
 	}
 
-	const T& top() const {
+	CUDA_CALLABLE_MEMBER const T& top() const {
 		return ar[0];
 	}
 
-	T peek(){
+	CUDA_CALLABLE_MEMBER T peek(){
 		T erg = ar[0];
 		ar[0] = ar[--count];
 		u32 id = 0;
@@ -55,7 +62,7 @@ public:
 				}
 				T tmp = ar[id];
 				ar[id] = ar[tausch];
-				ar[tausch] = ar[id];
+				ar[tausch] = tmp;
 				id = tausch;
 				left = id*2 + 1;
 			}

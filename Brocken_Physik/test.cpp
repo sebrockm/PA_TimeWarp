@@ -1,5 +1,6 @@
 #include "Queue.h"
 #include "Movable.h"
+#include "Heap.h"
 
 #include <iostream>
 using namespace std;
@@ -9,19 +10,15 @@ struct Test{
 };
 
 int main(){
-	Queue<Test, 10> q;
+	Heap<f32, 10> q;
 	for(int i=0;i<10;i++){
-		Test m;
-		m.timestamp = 2*i;
-		q.insert(m);
-		q.peek();
-		m.timestamp = 2*i+1;
-		q.insert(m);
+		q.insert(10-i);
 	}
 	cout << q.full() << endl;
-	u32 id = q.searchNext(.45f);
 
-	cout << q.get(id).timestamp << endl;
+	while(!q.empty()){
+		cout << q.peek() << endl;
+	}
 
 	system("pause");
 }
