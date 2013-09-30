@@ -37,6 +37,18 @@ public:
 
 		phi = createRotationQuaternion(omega.length()*dt, omega.getNormalized()) * phi;
 	}
+
+	CUDA_CALLABLE_MEMBER void moveWithoutA(f32 dt){
+		x += v*dt;
+
+		phi = createRotationQuaternion(omega.length()*dt, omega.getNormalized()) * phi;
+
+		timestamp += dt;
+	}
+
+	CUDA_CALLABLE_MEMBER void moveOnlyA(f32 dt){
+		v[1] -= 9.81f*dt;
+	}
 };
 
 

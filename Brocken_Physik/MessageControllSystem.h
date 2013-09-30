@@ -14,6 +14,8 @@ struct Message{
 	f32 timestamp;
 	u32 src, dest;
 
+	CUDA_CALLABLE_MEMBER Message(MsgType ty, f32 t, u32 src, u32 dest):type(ty),timestamp(t),src(src),dest(dest){}
+
 	CUDA_CALLABLE_MEMBER bool operator < (const Message& b) const {
 		if(timestamp < b.timestamp)
 			return true;
@@ -66,6 +68,8 @@ private:
 
 public:
 	CUDA_CALLABLE_MEMBER MessageControllSystem(Heap<Message, 20>* q, Queue<Message, 20>* mb, u32 sc):inputQueues(q), mailboxes(mb), sphereCount(sc) {}
+
+	CUDA_CALLABLE_MEMBER MessageControllSystem(Queue<Message, 20>* mb, u32 sc):inputQueues(0), mailboxes(mb), sphereCount(sc) {}
 
 	CUDA_CALLABLE_MEMBER void send(const Message& msg){
 		mailboxes[msg.src].insert(msg);

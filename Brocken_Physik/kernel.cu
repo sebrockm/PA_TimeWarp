@@ -69,9 +69,8 @@ __global__ void handleNextMessage(
 		
 		//neuer state		
 		Sphere neu = stateQs[id].back();
-		neu.x += neu.v * (msg.timestamp-neu.timestamp);
-		neu.phi = createRotationQuaternion(neu.omega.length()*(msg.timestamp-neu.timestamp), neu.omega.getNormalized()) * neu.phi;
-		neu.timestamp = msg.timestamp - EPSILON; //FIXME ist das so sinnvoll?
+		neu.moveWithoutA(msg.timestamp-neu.timestamp);
+		//neu.timestamp = msg.timestamp - EPSILON; //FIXME ist das so sinnvoll?
 		neu.partner = msg.src;
 		stateQs[id].insert(neu); //Zustand unmittelbar vor der Kollision
 
@@ -148,6 +147,7 @@ __global__ void receiveFromMailboxes(
 __global__ void detectCollisions(
 	Plane* planes, u32 planeCount,
 	Queue<Message, 20>* mailboxes,//nur fuers Senden
+	Queue<Sphere, 20>* pendingQs,
 	Queue<Sphere, QL>* stateQs, u32 sphereCount, 
 	f32 tmin)
 {
@@ -168,20 +168,36 @@ __global__ void detectCollisions(
 		}
 	}
 
+	u32 stateId;
 	for(u32 i = 0; i < sphereCount; i++){
-		for(u32 j = stateQs[i].searchFirstBefore(stateQs[id].back()); j < stateQs[i].length(); j++){
+		for(u32 j = max(0, stateQs[i].searchFirstBefore(stateQs[id].back())); j < stateQs[i].length(); j++){
 			if(cd(stateQs[id].back(), stateQs[i][j], t)){
-				if(t < tmin){
+				if(t < tmin && (j == stateQs[i].length()-1 || t < stateQs[i][j+1].timestamp)){
 					partner = i;
+					stateId = j;
 					tmin = t;
 					nextIsPlane = false;
+					break;
 				}
 			}
 		}
 	}
 
+	MessageControllSystem mcs(mailboxes, sphereCount);
+	CollisionHandler ch;
 
-	//TODO senden
+	Sphere neu = stateQs[id].back();
+	neu.moveWithoutA(t);
+	if(nextIsPlane){
+		ch(neu, planes[partner]);
+		stateQs[id].insert(neu);
+	}
+	else{
+		ch(neu, stateQs[partner][stateId]);
+		pendingQs[id].insert(neu);
+		Message msg(Message::event, neu.timestamp, id, partner);
+		mcs.send(msg);
+	}
 }
 
 

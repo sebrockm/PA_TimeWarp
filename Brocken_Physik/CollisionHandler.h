@@ -243,6 +243,11 @@ public:
 
 
 
+
+
+
+
+	//hier ist neu
 	CUDA_CALLABLE_MEMBER void operator () (
 		Sphere& s1, const Sphere& s2) const
 	{
@@ -283,6 +288,48 @@ public:
 		s1.v = (tmpv - res * s2.m * (v1Orth-v2Orth)) / m //neuer Orthogonalteil
 			+ (1-mue) * v1Par + crossProduct((1-mue)*omega1Par-omegaParNeu, r1); //neuer Parallelteil;
 	}
+
+	CUDA_CALLABLE_MEMBER void operator () (
+		Sphere& s, const Plane& p) const
+	{
+
+		//Teil der Geschwindigkeit, der senkrecht zur Ebene liegt
+		Vector3f vOrth = s.v.getParallelPartToNormal(p.n);
+
+		//Parallelteil
+		Vector3f vPar = s.v - vOrth;
+
+		//Teil der Rotationsgeschwindigkeit, der senkrecht zur Ebene liegt
+		Vector3f omegaOrth = s.omega.getParallelPartToNormal(p.n);
+
+		//und der parallele Teil
+		Vector3f omegaPar = s.omega - omegaOrth;
+
+		//Koeffizienten abhängig von den Materialien
+		f32 res = resCoef[s.k][p.k];
+		f32 mue = staticFricCoef[s.k][p.k];									
+
+		// Radius als Vektor
+		Vector3f r = p.n * (p.orientatedDistanceTo(s.x))>0 ? (-s.r) : (s.r);
+
+		//neuer Parallelteil der Rotation
+		Vector3f omegaParNeu = (1.f-5.f/7*mue) * omegaPar - 
+			5.f/7*mue / (s.r*s.r) * r.crossProduct(vPar);
+
+		f32 f = fNearlyEqual(abs(p.n[1]),1.f) ? 1 : .99f;
+
+		//neue Winkelgeschwindigkeit
+		s.omega = f*(omegaParNeu + /*res **/ omegaOrth);
+
+		//neue Geschwindigkeit
+		s.v = f*(-res*vOrth //neuer Orthogonalteil
+			+ (1-mue) * vPar + crossProduct((1-mue)*omegaPar-omegaParNeu, r));
+	}
+
+
+
+
+
 
 
 

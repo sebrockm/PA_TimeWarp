@@ -20,11 +20,13 @@ public:
 		/* Berechnung der notwendigen Variablen */
 		Vector3f p12 = s1.x - s2.x;
 		f32 tdiff = s1.timestamp - s2.timestamp;
-		if(tdiff > 0){
+		if(tdiff > 0){//t bezieht sich auf s1.timestamp als Nullpunkt
 			p12 -= tdiff*s2.v;
+			t = 0;
 		}
 		else{
 			p12 -= tdiff*s1.v;
+			t = -tdiff;
 		}
 
 		Vector3f v12 = s1.v - s2.v;
@@ -32,6 +34,7 @@ public:
 		f32 v12v12 = v12 * v12;
 		if(v12v12 == 0.f)
 			return false;
+
 
 		f32 p12p12 = p12 * p12;
 		f32 r = s1.r + s2.r;
@@ -49,21 +52,21 @@ public:
 	    f32 t2 = (-p12v12 - wurzel)/v12v12;
 
 		/* Ausgabe */
-		if(t1 < 0 && t2 > 0)
+		if(t1 < 0 && t2 >= 0)
 		{
-			t = t2;
+			t += t2;
 		}
-		else if(t2 < 0 && t1 > 0)
+		else if(t2 < 0 && t1 >= 0)
 		{
-			t = t1;
+			t += t1;
 		}
 		else if(t2 < 0 && t1 < 0)
 		{
 			return false;
 		}
-		else if(t2 > 0 && t1 > 0)
+		else if(t2 >= 0 && t1 >= 0)
 		{
-			t = min(t1, t2);
+			t += min(t1, t2);
 		}
 		return true;
 
@@ -99,9 +102,12 @@ public:
 		//}
 		//
 		//return false;
+		f32 tmp = s.v * p.n;
+		if(tmp == 0)
+			return false;
 
-		t = ((p.orientatedDistanceTo(s.x)>0 ? s.r : -s.r) + p.d - s.x*p.n) / (s.v*p.n);
-		return t > 0;
+		t = ((p.orientatedDistanceTo(s.x)>0 ? s.r : -s.r) + p.d - s.x*p.n) / tmp;
+		return t >= 0;
 	}
 
 	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, Vector3f& pt) const{return false;}
