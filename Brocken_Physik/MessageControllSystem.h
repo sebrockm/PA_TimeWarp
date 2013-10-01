@@ -14,6 +14,7 @@ struct Message{
 	f32 timestamp;
 	u32 src, dest;
 
+	CUDA_CALLABLE_MEMBER Message(){};
 	CUDA_CALLABLE_MEMBER Message(MsgType ty, f32 t, u32 src, u32 dest):type(ty),timestamp(t),src(src),dest(dest){}
 
 	CUDA_CALLABLE_MEMBER bool operator < (const Message& b) const {
@@ -30,10 +31,18 @@ struct Message{
 		return false;
 	}
 
-	CUDA_CALLABLE_MEMBER bool checkPair(const Message& other) const {
+	CUDA_CALLABLE_MEMBER bool checkAntiPair(const Message& other) const {
 		if(timestamp == other.timestamp && src == other.src && dest == other.dest){
 			return type == event && other.type == antievent || type == antievent && other.type == event ||
 				type == eventAck && other.type == antieventAck || type == antieventAck && other.type == eventAck;
+		}
+		return false;
+	}
+
+	CUDA_CALLABLE_MEMBER bool checkAckPair(const Message& other) const {
+		if(timestamp == other.timestamp && src == other.src && dest == other.dest){
+			return type == event && other.type == eventAck || type == eventAck && other.type == event ||
+				type == antievent && other.type == antieventAck || type == antieventAck && other.type == antievent;
 		}
 		return false;
 	}
@@ -47,6 +56,17 @@ struct Message{
 		case antieventAck: anti.type = eventAck; break;
 		}
 		return anti;
+	}
+
+	CUDA_CALLABLE_MEMBER Message createAck() const {
+		Message ack = *this;
+		ack.src = this->dest;
+		ack.dest = this->src;
+		switch(ack.type){
+		case event: ack.type = eventAck; break;
+		case antievent: ack.type = antieventAck; break;
+		}
+		return ack;
 	}
 
 	CUDA_CALLABLE_MEMBER bool operator == (const Message& other) const {

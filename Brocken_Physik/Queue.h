@@ -35,15 +35,27 @@ public:
 		return ar[(head+count-1)%Size];
 	}
 
-	CUDA_CALLABLE_MEMBER Body peek() {
+	CUDA_CALLABLE_MEMBER Body peekFront() {
 		u32 tmp = head;
 		head = (head+1) % Size;
 		count--;
 		return ar[tmp];
 	}
 
-	CUDA_CALLABLE_MEMBER void insert(const Body& b){
+	CUDA_CALLABLE_MEMBER Body peekBack() {
+		u32 tmp = (head + count) % Size;
+		count--;
+		return ar[tmp];
+	}
+
+	CUDA_CALLABLE_MEMBER void insertBack(const Body& b){
 		ar[(head+count)%Size] = b;
+		count++;
+	}
+
+	CUDA_CALLABLE_MEMBER void insertFront(const Body& b){
+		head = (head + Size - 1) % Size;
+		ar[head] = b;
 		count++;
 	}
 

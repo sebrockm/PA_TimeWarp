@@ -28,6 +28,10 @@ public:
 		return count == Size;
 	}
 
+	CUDA_CALLABLE_MEMBER void eraseAll(){
+		count = 0;
+	}
+
 	CUDA_CALLABLE_MEMBER void insert(const T& t){
 		u32 id = count++;
 		ar[id] = t;

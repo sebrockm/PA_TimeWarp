@@ -13,6 +13,7 @@ __global__ void handleNextMessage(
 	Heap<Message, 20>* inputQs, 
 	//Queue<Message, 20>* doneQs,
 	Queue<Message, 20>* outputQs,
+	Queue<Sphere, 20>* pendingQs,
 	Queue<Message, 20>* mailboxes,//nur fuers Senden
 	u32 sphereCount)
 {
@@ -22,24 +23,27 @@ __global__ void handleNextMessage(
 	if(id >= sphereCount)
 		return;
 
+	
+	MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
+
 	Message msg;
 	msg.type = Message::mull;
 
 	//naechste Message suchen, die sich nicht irgendwie aufloest
 	while(inputQs[id].length() > 0){
-		msg = inputQs[id].peek();
+		msg = inputQs[id].peekFront();
 		if(inputQs[id].length() > 0){
-			if(msg.checkPair(inputQs[id].top())){
-				inputQs[id].peek();
+			if(msg.checkAntiPair(inputQs[id].top())){
+				inputQs[id].peekFront();
 				if(inputQs[id].length() > 0){
-					msg = inputQs[id].peek();
+					msg = inputQs[id].peekFront();
 				}
 				else{
 					msg.type = Message::mull;
 				}
 			}
 			else if(msg == inputQs[id].top()){
-				inputQs[id].peek();
+				inputQs[id].peekFront();
 			}
 			else{
 				break;
@@ -56,36 +60,35 @@ __global__ void handleNextMessage(
 			
 			//rollback
 			stateQs[id].deleteAllGreaterThan(lvt);
-			//doneQs[id].deleteAllGreaterThan(lvt);
-			MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
+			inputQs[id].eraseAll();//alle noch vorhandenen Nachrichten liegen in der Zukunft und sind somit nicht mehr aktuell
 
 			u32 pos = outputQs[id].searchFirstBefore(msg) + 1;
 			for(int i = pos; i < outputQs[id].length(); i++){
 				mcs.send(outputQs[id][i]);
 			}
 			outputQs[id].deleteAllAfterEq(pos);
-
 		}
 		
 		//neuer state		
 		Sphere neu = stateQs[id].back();
 		neu.moveWithoutA(msg.timestamp-neu.timestamp);
-		//neu.timestamp = msg.timestamp - EPSILON; //FIXME ist das so sinnvoll?
 		neu.partner = msg.src;
-		stateQs[id].insert(neu); //Zustand unmittelbar vor der Kollision
+		stateQs[id].insertBack(neu); //Zustand unmittelbar vor der Kollision
 
-		neu.timestamp = msg.timestamp;
+		//neu.timestamp = msg.timestamp;
 		int sid = stateQs[msg.src].searchFirstBefore(neu);
 		if(sid < 0){
 			printf("Kollisionspartner ist weg :(\n");
 			break;
 		}
 
-		Sphere other = stateQs[msg.src][sid];
-
 		CollisionHandler ch;
-		ch(neu, other);//neu ist jetzt kollidiert
-		stateQs[id].insert(neu); //Zustand unmittelbar nach der Kollision
+		ch(neu, stateQs[msg.src][sid]);//neu ist jetzt kollidiert
+		stateQs[id].insertBack(neu); //Zustand unmittelbar nach der Kollision
+
+		//Ack senden, damit anderer weiss, dass diese msg tatsaechlich verarbeitet wurde
+		mcs.send(msg.createAck());
+		outputQs[id].insertBack(msg.createAck().createAnti());
 
 		break;
 	}
@@ -106,13 +109,15 @@ __global__ void handleNextMessage(
 		if(stateQs[id][sid].timestamp == msg.timestamp && stateQs[id][sid].partner == msg.src){
 			stateQs[id].deleteAllAfterEq(sid);
 
-			MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
-
 			u32 pos = outputQs[id].searchFirstBefore(msg) + 1;
 			for(int i = pos; i < outputQs[id].length(); i++){
 				mcs.send(outputQs[id][i]);
 			}
 			outputQs[id].deleteAllAfterEq(pos);
+
+			inputQs[id].eraseAll();//alle noch vorhandenen Nachrichten liegen in der Zukunft und sind somit nicht mehr aktuell
+
+			mcs.send(msg.createAck());//mitteilen, dass diese msg tatsaechlich bearbeitet wurde
 		}
 		else{
 			//printf("state zum antievent nicht vorhanden\n");
@@ -120,8 +125,14 @@ __global__ void handleNextMessage(
 		break;
 	}
 
-	case Message::eventAck:break;
-	case Message::antieventAck:break;
+	case Message::eventAck:
+	{
+		//hier muss ueberlegt werden...
+
+		break;
+	}
+
+	case Message::antieventAck:break;//hier auch...
 	}
 
 	//doneQs[id].insert(msg);
@@ -148,22 +159,27 @@ __global__ void detectCollisions(
 	Plane* planes, u32 planeCount,
 	Queue<Message, 20>* mailboxes,//nur fuers Senden
 	Queue<Sphere, 20>* pendingQs,
+	Queue<Message, 20>* outputQs,
 	Queue<Sphere, QL>* stateQs, u32 sphereCount, 
 	f32 tmin)
 {
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
+	if(id >= sphereCount)
+		return;
+
 	CollisionDetector cd;
 	f32 t;
 	f32 lvt = stateQs[id].back().timestamp;
 
 	u32 partner;
-	bool nextIsPlane = false;
+	int nextCol = 0;
 	for(u32 i = 0; i < planeCount; i++){
 		if(cd(stateQs[id].back(), planes[i], t)){
+			t += stateQs[id].back().timestamp;
 			if(t < tmin){
 				partner = i;
 				tmin = t;
-				nextIsPlane = true;
+				nextCol = 1;
 			}
 		}
 	}
@@ -171,12 +187,13 @@ __global__ void detectCollisions(
 	u32 stateId;
 	for(u32 i = 0; i < sphereCount; i++){
 		for(u32 j = max(0, stateQs[i].searchFirstBefore(stateQs[id].back())); j < stateQs[i].length(); j++){
-			if(cd(stateQs[id].back(), stateQs[i][j], t)){
+			if(cd(stateQs[id].back(), stateQs[i][j], t)){//t ist Kollisionszeitpunkt mit s1.timestamp als Nullpunkt
+				t += stateQs[id].back().timestamp;
 				if(t < tmin && (j == stateQs[i].length()-1 || t < stateQs[i][j+1].timestamp)){
 					partner = i;
 					stateId = j;
 					tmin = t;
-					nextIsPlane = false;
+					nextCol = 2;
 					break;
 				}
 			}
@@ -186,17 +203,24 @@ __global__ void detectCollisions(
 	MessageControllSystem mcs(mailboxes, sphereCount);
 	CollisionHandler ch;
 
-	Sphere neu = stateQs[id].back();
-	neu.moveWithoutA(t);
-	if(nextIsPlane){
+	if(nextCol == 1){//Kollision mit Ebene
+		Sphere neu = stateQs[id].back();
+		neu.moveWithoutA(t);
+		neu.partner = -1;
 		ch(neu, planes[partner]);
-		stateQs[id].insert(neu);
+		stateQs[id].insertBack(neu);
 	}
-	else{
+	else if(nextCol == 2){//Kollision mit Sphere
+		Sphere neu = stateQs[id].back();
+		neu.moveWithoutA(t-neu.timestamp);
+		neu.partner = partner;
 		ch(neu, stateQs[partner][stateId]);
-		pendingQs[id].insert(neu);
+		pendingQs[id].insertBack(neu);
+
+		//event an partner senden
 		Message msg(Message::event, neu.timestamp, id, partner);
 		mcs.send(msg);
+		outputQs[id].insertBack(msg.createAnti());
 	}
 }
 
