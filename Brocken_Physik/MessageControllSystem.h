@@ -8,11 +8,12 @@ struct Message{
 		event,
 		antievent,
 		eventAck,
-		antieventAck,
+		eventNack,
 		mull
 	} type;
 	f32 timestamp;
 	u32 src, dest;
+	Sphere newState;
 
 	CUDA_CALLABLE_MEMBER Message(){};
 	CUDA_CALLABLE_MEMBER Message(MsgType ty, f32 t, u32 src, u32 dest):type(ty),timestamp(t),src(src),dest(dest){}
@@ -25,7 +26,7 @@ struct Message{
 				return true;
 			if(src == b.src){
 				return (type == event && b.type == antievent) || 
-					(type == eventAck && b.type == antieventAck);
+					(type == eventAck && b.type == eventNack);
 			}
 		}
 		return false;
@@ -34,7 +35,7 @@ struct Message{
 	CUDA_CALLABLE_MEMBER bool checkAntiPair(const Message& other) const {
 		if(timestamp == other.timestamp && src == other.src && dest == other.dest){
 			return type == event && other.type == antievent || type == antievent && other.type == event ||
-				type == eventAck && other.type == antieventAck || type == antieventAck && other.type == eventAck;
+				type == eventAck && other.type == eventNack || type == eventNack && other.type == eventAck;
 		}
 		return false;
 	}
@@ -42,7 +43,7 @@ struct Message{
 	CUDA_CALLABLE_MEMBER bool checkAckPair(const Message& other) const {
 		if(timestamp == other.timestamp && src == other.src && dest == other.dest){
 			return type == event && other.type == eventAck || type == eventAck && other.type == event ||
-				type == antievent && other.type == antieventAck || type == antieventAck && other.type == antievent;
+				type == antievent && other.type == eventNack || type == eventNack && other.type == antievent;
 		}
 		return false;
 	}
@@ -52,8 +53,8 @@ struct Message{
 		switch(anti.type){
 		case event: anti.type = antievent; break;
 		case antievent: anti.type = event; break;
-		case eventAck: anti.type = antieventAck; break;
-		case antieventAck: anti.type = eventAck; break;
+		case eventAck: anti.type = eventNack; break;
+		case eventNack: anti.type = eventAck; break;
 		}
 		return anti;
 	}
@@ -64,7 +65,7 @@ struct Message{
 		ack.dest = this->src;
 		switch(ack.type){
 		case event: ack.type = eventAck; break;
-		case antievent: ack.type = antieventAck; break;
+		case antievent: ack.type = eventNack; break;
 		}
 		return ack;
 	}
