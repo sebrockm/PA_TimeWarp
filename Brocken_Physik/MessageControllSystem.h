@@ -93,9 +93,10 @@ public:
 	CUDA_CALLABLE_MEMBER MessageControllSystem(Queue<Message, 20>* mb, u32 sc):inputQueues(0), mailboxes(mb), sphereCount(sc) {}
 
 	CUDA_CALLABLE_MEMBER void send(const Message& msg){
-		mailboxes[msg.src].insert(msg);
+		mailboxes[msg.src].insertBack(msg);
 	}
 
+#ifdef __CUDACC__
 	CUDA_CALLABLE_MEMBER void recv(){
 		u32 id = threadIdx.x + blockIdx.x*blockDim.x;
 		for(u32 i = 0; i < sphereCount; i++){
@@ -107,4 +108,5 @@ public:
 			}
 		}
 	}
+#endif
 };

@@ -3,9 +3,9 @@
 #include "CollisionDetector.h"
 #include "CollisionHandler.h"
 
-#include "Queue.h"
-#include "Heap.h"
-#include "MessageControllSystem.h"
+void test(int a){
+	calculateGVT<<<100, 32>>>(0, 0, a);
+}
 
 
 __device__ void rollback(Queue<Sphere, QL>* stateQs, 
@@ -54,8 +54,6 @@ __global__ void handleNextMessages(
 
 	
 	MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
-	CollisionDetector cd;
-	CollisionHandler ch;
 
 	Message msg;
 	msg.type = Message::mull;
@@ -266,6 +264,25 @@ __global__ void detectCollisions(
 }
 
 
+__global__ void calculateGVT(
+	Heap<Message, QL>* inputQs,
+	Queue<Sphere, QL>* stateQs,
+	f32* gvts,
+	u32 sphereCount)
+{
+	int id = threadIdx.x + blockIdx.x*blockDim.x;
+
+	if(id >= sphereCount)
+		return;
+
+	gvts[id] = min(inputQs[id].top().timestamp, stateQs[id].back().timestamp);
+
+	for(int stride = 2; stride/2 < sphereCount; stride *= 2){
+		if(id*stride < sphereCount){
+			gvts[id*stride] = min(gvts[id*stride], gvts[min(id*stride+stride/2, sphereCount-1)]);
+		}
+	}
+}
 
 
 
