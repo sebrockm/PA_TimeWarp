@@ -1,19 +1,25 @@
 #include "Queue.h"
 #include "Movable.h"
 #include "Heap.h"
-#include "kernel.h"
+#include "TimeWarpKernel.h"
 
 #include <iostream>
+#include <cstdlib>
+#include <algorithm>
+#include <ctime>
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include "MyExceptions.h"
+#include <thrust\reduce.h>
+#include <thrust\functional.h>
+
 using namespace std;
 
-struct Test{
-	f32 timestamp;
-};
+
 
 int main(){
-	int a;
-	cin>>a;
-	test(a);
+
 
 	system("pause");
 }

@@ -39,7 +39,8 @@ public:
 	}
 
 	CUDA_CALLABLE_MEMBER void moveWithoutA(f32 dt){
-		x += v*dt;
+		x += v*dt - .5f*9.81f*dt*dt;
+		v[1] -= 9.81f*dt;
 
 		phi = createRotationQuaternion(omega.length()*dt, omega.getNormalized()) * phi;
 

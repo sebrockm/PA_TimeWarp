@@ -8,43 +8,10 @@
 #include "KDTree.h"
 #include "Connector.h"
 
-#include "Queue.h"
-#include "Heap.h"
-#include "MessageControllSystem.h"
-
 #include <cuda.h>
 #include <cuda_runtime.h>
 
 const u32 BLOCKSIZE = 1 << 8;
-void test(int);
-__global__ void calculateGVT(
-	Heap<Message, QL>* inputQs,
-	Queue<Sphere, QL>* stateQs,
-	u32 sphereCount);
-
-
-__global__ void detectCollisions(
-	Plane* planes, u32 planeCount,
-	Queue<Message, QL>* mailboxes,//nur fuers Senden
-	Sphere* pendings,
-	Queue<Message, QL>* outputQs,
-	Queue<Sphere, QL>* stateQs, u32 sphereCount, 
-	f32 tmin);
-
-__global__ void receiveFromMailboxes( 
-	Heap<Message, QL>* inputQs, 
-	Queue<Message, QL>* mailboxes,//nur fuers Empfangen
-	u32 sphereCount);
-
-__global__ void handleNextMessages(
-	Queue<Sphere, QL>* stateQs, 
-	Heap<Message, QL>* inputQs,
-	Queue<Message, QL>* outputQs,
-	Sphere* pendings,
-	Queue<Message, QL>* mailboxes,//nur fuers Senden
-	u32 sphereCount);
-
-
 
 
 __global__ void cuboidKernel(Plane* planes, u32 planeCount, 
