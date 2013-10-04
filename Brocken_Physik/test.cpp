@@ -2,24 +2,48 @@
 #include "Movable.h"
 #include "Heap.h"
 #include "TimeWarpKernel.h"
+#include "GLManager.h"
+#include "MyExceptions.h"
 
 #include <iostream>
-#include <cstdlib>
-#include <algorithm>
-#include <ctime>
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include "MyExceptions.h"
-#include <thrust\reduce.h>
-#include <thrust\functional.h>
 
 using namespace std;
 
 
 
-int main(){
+int main(int argc, char** argv){
+	std::cout.precision(3);
+	GLManager& glmgr = GLManager::instance();
+	glmgr.init(argc, argv);
+	glmgr.createShaderProgram("vs.glsl", "fs.glsl");
+	
 
+	TimeWarpManager& cmgr = glmgr.cmgr;
 
-	system("pause");
+	cmgr.addPlane();
+	cmgr.planes[0].set(Vector3f(0,1,0).getNormalized(),Vector3f(), steel);
+
+	cmgr.addSphere(1);
+	cmgr.spheres[0].set(Vector3f(0,5,0), 1);
+
+	glmgr.cam.pos = Vector3f(0,5,25);
+
+	try{
+		glmgr.enterMainLoop();
+	}
+	catch(cuda_exception& cu){
+		clog << cu.what() << endl;
+		system("pause");
+	}
+	catch(std::exception& e){
+		clog << e.what() << endl;
+		system("pause");
+	}
+	catch(char* s){
+		clog << s << endl;
+		system("pause");
+	}
+
+	return 0;
 }

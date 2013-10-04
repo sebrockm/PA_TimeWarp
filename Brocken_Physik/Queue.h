@@ -71,6 +71,10 @@ public:
 		return count;
 	}
 
+	CUDA_CALLABLE_MEMBER void removeAll(){
+		count = 0;
+	}
+
 	CUDA_CALLABLE_MEMBER u32 size() const {
 		return Size;
 	}
@@ -105,19 +109,21 @@ public:
 
 	CUDA_CALLABLE_MEMBER int searchFirstBefore(f32 t) const {
 		int first = 0;
-		int last = count - 1;
+		//int last = count - 1;
 
-		while(first < last){
-			u32 middle = (first + last) / 2;
+		//while(first < last){
+		//	u32 middle = (first + last) / 2;
 
-			if((*this)[middle].timestamp < t){ //in hinterer Haelfte weitersuchen, middle kann nicht das gesuchte sein
-				first = middle + 1;
-			}
-			else{ //in vorderer Haelfte weitersuchen, middle koennte das gesuchte sein
-				last = middle;
-			}
-		}
+		//	if((*this)[middle].timestamp < t){ //in hinterer Haelfte weitersuchen, middle kann nicht das gesuchte sein
+		//		first = middle + 1;
+		//	}
+		//	else{ //in vorderer Haelfte weitersuchen, middle koennte das gesuchte sein
+		//		last = middle;
+		//	}
+		//}
 
+		//return first - 1;
+		while(first < count && (*this)[first].timestamp < t) first++;
 		return first - 1;
 	}
 

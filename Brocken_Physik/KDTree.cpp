@@ -13,7 +13,7 @@ using namespace std;
 
 
 bool IsObjectPartOf::operator () (u32 id){
-	if(axNo != noAxis){
+	/*if(axNo != noAxis){
 		Vector3f n;
 
 		n[axNo] = 1;
@@ -42,13 +42,13 @@ bool IsObjectPartOf::operator () (u32 id){
 			}
 			return p.distanceTo(c.x) <= c.getProjectionOnNormal(p.n)/2;
 		}
-	}
+	}*/
 
 	return false;
 }
 
 bool AxComparator::operator () (u32 s1, u32 s2) const {
-	auto& cmgr = GLManager::instance().cmgr;
+	/*auto& cmgr = GLManager::instance().cmgr;
 	Vector3f x1, x2, r1, r2;
 
 	if(s1 < cmgr.getOffset<Sphere>() + cmgr.sphereCount){
@@ -110,102 +110,103 @@ bool AxComparator::operator () (u32 s1, u32 s2) const {
 	if(less)
 		return x1[axNo] - r1[axNo] < x2[axNo] - r2[axNo];
 	else
-		return x1[axNo] + r1[axNo] < x2[axNo] + r2[axNo];
+		return x1[axNo] + r1[axNo] < x2[axNo] + r2[axNo];*/
+	return false;
 }
 
 
 std::pair<f32, Axes> findGoodAxis(u32* first, u32* last){
-	auto& cmgr = GLManager::instance().cmgr;
+	//auto& cmgr = GLManager::instance().cmgr;
 
-	// mins und maxs bilden eine AABBox
-	Vector3f mins(INFINITY);
-	Vector3f maxs(-INFINITY);
+	//// mins und maxs bilden eine AABBox
+	//Vector3f mins(INFINITY);
+	//Vector3f maxs(-INFINITY);
 
-	Vector3f sum;
-	auto dif = last - first;
+	//Vector3f sum;
+	//auto dif = last - first;
 
 
-	while(first != last){
-		if(*first < cmgr.getOffset<Sphere>() + cmgr.sphereCount){
-			auto& s = cmgr.spheres[*first-cmgr.getOffset<Sphere>()];
-			for(int i=0; i<3; i++){
-				if(s.x[i] - s.r < mins[i]){
-					mins[i] = s.x[i] - s.r;
-				}
+	//while(first != last){
+	//	if(*first < cmgr.getOffset<Sphere>() + cmgr.sphereCount){
+	//		auto& s = cmgr.spheres[*first-cmgr.getOffset<Sphere>()];
+	//		for(int i=0; i<3; i++){
+	//			if(s.x[i] - s.r < mins[i]){
+	//				mins[i] = s.x[i] - s.r;
+	//			}
 
-				if(s.x[i] + s.r > maxs[i]){
-					maxs[i] = s.x[i] + s.r;
-				}
+	//			if(s.x[i] + s.r > maxs[i]){
+	//				maxs[i] = s.x[i] + s.r;
+	//			}
 
-				sum[i] += s.x[i];
-			}
-		}
-		else if(*first < cmgr.getOffset<Cuboid>() + cmgr.cuboidCount){
-			auto& c = cmgr.cuboids[*first-cmgr.getOffset<Cuboid>()];
-			auto axes = c.getMainAxes();
-			Vector3f r;
-			for(int i=0; i<3; i++){
-				for(int j=0; j<3; j++){
-					r[i] += abs(axes[j][i]);
-				}
-			}
-			r /= 2;
+	//			sum[i] += s.x[i];
+	//		}
+	//	}
+	//	else if(*first < cmgr.getOffset<Cuboid>() + cmgr.cuboidCount){
+	//		auto& c = cmgr.cuboids[*first-cmgr.getOffset<Cuboid>()];
+	//		auto axes = c.getMainAxes();
+	//		Vector3f r;
+	//		for(int i=0; i<3; i++){
+	//			for(int j=0; j<3; j++){
+	//				r[i] += abs(axes[j][i]);
+	//			}
+	//		}
+	//		r /= 2;
 
-			for(int i=0; i<3; i++){
-				if(c.x[i] - r[i] < mins[i]){
-					mins[i] = c.x[i] - r[i];
-				}
+	//		for(int i=0; i<3; i++){
+	//			if(c.x[i] - r[i] < mins[i]){
+	//				mins[i] = c.x[i] - r[i];
+	//			}
 
-				if(c.x[i] + r[i] > maxs[i]){
-					maxs[i] = c.x[i] + r[i];
-				}
+	//			if(c.x[i] + r[i] > maxs[i]){
+	//				maxs[i] = c.x[i] + r[i];
+	//			}
 
-				sum[i] += c.x[i];
-			}
-		}
-		else if(*first < cmgr.getOffset<FixCuboid>() + cmgr.fixCuboidCount){
-			auto& c = cmgr.fixCuboids[*first-cmgr.getOffset<FixCuboid>()];
-			auto axes = c.getMainAxes();
-			Vector3f r;
-			for(int i=0; i<3; i++){
-				for(int j=0; j<3; j++){
-					r[i] += abs(axes[j][i]);
-				}
-			}
-			r /= 2;
+	//			sum[i] += c.x[i];
+	//		}
+	//	}
+	//	else if(*first < cmgr.getOffset<FixCuboid>() + cmgr.fixCuboidCount){
+	//		auto& c = cmgr.fixCuboids[*first-cmgr.getOffset<FixCuboid>()];
+	//		auto axes = c.getMainAxes();
+	//		Vector3f r;
+	//		for(int i=0; i<3; i++){
+	//			for(int j=0; j<3; j++){
+	//				r[i] += abs(axes[j][i]);
+	//			}
+	//		}
+	//		r /= 2;
 
-			for(int i=0; i<3; i++){
-				if(c.x[i] - r[i] < mins[i]){
-					mins[i] = c.x[i] - r[i];
-				}
+	//		for(int i=0; i<3; i++){
+	//			if(c.x[i] - r[i] < mins[i]){
+	//				mins[i] = c.x[i] - r[i];
+	//			}
 
-				if(c.x[i] + r[i] > maxs[i]){
-					maxs[i] = c.x[i] + r[i];
-				}
+	//			if(c.x[i] + r[i] > maxs[i]){
+	//				maxs[i] = c.x[i] + r[i];
+	//			}
 
-				sum[i] += c.x[i];
-			}
-		}
+	//			sum[i] += c.x[i];
+	//		}
+	//	}
 
-		++first;
-	}
+	//	++first;
+	//}
 
-	//sum /= static_cast<f32>(dif); //arithmetische Mittel (ideal wären Mediane)
-	maxs -= mins; //Seitenlängen der AABBox
+	////sum /= static_cast<f32>(dif); //arithmetische Mittel (ideal wären Mediane)
+	//maxs -= mins; //Seitenlängen der AABBox
 
-	//entlang der Längsten Seite teilen, möglichst in der Mitte
-	if(maxs[0] > maxs[1] && maxs[0] > maxs[2]){
-		//createPlane(Plane(Vector3f(1,0,0),sum[0]/dif,glass));
-		return std::make_pair(sum[0]/dif, xAxis);
-	}
-	if(maxs[1] > maxs[0] && maxs[1] > maxs[2]){
-		//createPlane(Plane(Vector3f(0,1,0),sum[1]/dif,glass));
-		return std::make_pair(sum[1]/dif, yAxis);
-	}
+	////entlang der Längsten Seite teilen, möglichst in der Mitte
+	//if(maxs[0] > maxs[1] && maxs[0] > maxs[2]){
+	//	//createPlane(Plane(Vector3f(1,0,0),sum[0]/dif,glass));
+	//	return std::make_pair(sum[0]/dif, xAxis);
+	//}
+	//if(maxs[1] > maxs[0] && maxs[1] > maxs[2]){
+	//	//createPlane(Plane(Vector3f(0,1,0),sum[1]/dif,glass));
+	//	return std::make_pair(sum[1]/dif, yAxis);
+	//}
 	//cout<<"z...";
 	//createPlane(Plane(Vector3f(0,0,1),sum[2]/dif,glass));
-	return std::make_pair(sum[2]/dif, zAxis);
-	
+	//return std::make_pair(sum[2]/dif, zAxis);
+	return std::make_pair(0, xAxis);
 }
 
 
@@ -219,19 +220,19 @@ KDTreeNode::KDTreeNode():indexStart(0), indexEnd(0), axis(0), axNo(noAxis),
 
 void KDTreeNode::set() 
 {
-	auto& cmgr = GLManager::instance().cmgr;
-	size = 0;
-	
-	//initiale Indexmenge
-	static vector<u32> indices;
-	if(indices.capacity() < cmgr.getOffset<FixCuboid>() + cmgr.fixCuboidCount){
-		indices.reserve(cmgr.getOffset<FixCuboid>() + cmgr.fixCuboidCount);
-		for(u32 i = (u32)indices.size(); i < (u32)indices.capacity(); i++){
-			indices.push_back(i);
-		}
-	}
+	//auto& cmgr = GLManager::instance().cmgr;
+	//size = 0;
+	//
+	////initiale Indexmenge
+	//static vector<u32> indices;
+	//if(indices.capacity() < cmgr.getOffset<FixCuboid>() + cmgr.fixCuboidCount){
+	//	indices.reserve(cmgr.getOffset<FixCuboid>() + cmgr.fixCuboidCount);
+	//	for(u32 i = (u32)indices.size(); i < (u32)indices.capacity(); i++){
+	//		indices.push_back(i);
+	//	}
+	//}
 
-	cmgr.leafIndexCount = 0;
+	//cmgr.leafIndexCount = 0;
 
 #ifdef DRAW_KDTREE
 	Vector3f& aabb1 = cmgr.treeArray[0].aabb1;
@@ -276,59 +277,59 @@ void KDTreeNode::set()
 	}
 #endif
 
-	cmgr.treeArray[0].set(indices.begin(), indices.end(), 0, 0);
-	size++;
+	/*cmgr.treeArray[0].set(indices.begin(), indices.end(), 0, 0);
+	size++;*/
 }
 
 
 void KDTreeNode::set(vector<u32>::iterator first, 
 	vector<u32>::iterator last, int depth, u32 father)
 {
-	u32 myId = size;
-	this->father = father;
-	auto& cmgr = GLManager::instance().cmgr;
-	
-	indexStart = cmgr.leafIndexCount;
-
-#ifdef DRAW_KDTREE
-	if(myId != 0){
-		aabb1 = cmgr.treeArray[father].aabb1;
-		aabb2 = cmgr.treeArray[father].aabb2;
-		aabb2[cmgr.treeArray[father].axNo] = cmgr.treeArray[father].axis;
-	}
-#endif
-	
-	if(last > first + ELEMENTS_IN_LEAF && depth < MAX_DEPTH){
-
-		boost::tie(axis, axNo) = findGoodAxis(&*first, &*last);
-
-		if(size+1 < MAX_NODES){
-			auto middle = partition(first, last, IsObjectPartOf(axNo, axis, true));
-			left = ++size;
-			cmgr.treeArray[left].set(first, middle, depth+1, myId);
-		}
-		else throw std::overflow_error("Zu viele Nodes");
-
-		vector<u32>::reverse_iterator rfirst(last), rlast(first);
-
-		if(size+1 < MAX_NODES){
-			auto rmiddle = partition(rfirst, rlast, IsObjectPartOf(axNo, axis, false));
-			right = ++size;
-			cmgr.treeArray[right].set(rfirst, rmiddle, depth+1, myId);
-		}
-		else throw std::overflow_error("Zu viele Nodes");
-	}
-	else{ //Dieser Knoten ist ein Blatt
-		if(cmgr.leafIndexCount + (last - first) > cmgr.MAX_LEAFINDICES)
-			throw std::overflow_error("Zu viele Leaves");
-
-		while(first != last){
-			cmgr.leafIndices[cmgr.leafIndexCount++] = *first++;
-		}
-		axNo = noAxis;
-	}
-	
-	indexEnd = cmgr.leafIndexCount;
+//	u32 myId = size;
+//	this->father = father;
+//	auto& cmgr = GLManager::instance().cmgr;
+//	
+//	indexStart = cmgr.leafIndexCount;
+//
+//#ifdef DRAW_KDTREE
+//	if(myId != 0){
+//		aabb1 = cmgr.treeArray[father].aabb1;
+//		aabb2 = cmgr.treeArray[father].aabb2;
+//		aabb2[cmgr.treeArray[father].axNo] = cmgr.treeArray[father].axis;
+//	}
+//#endif
+//	
+//	if(last > first + ELEMENTS_IN_LEAF && depth < MAX_DEPTH){
+//
+//		boost::tie(axis, axNo) = findGoodAxis(&*first, &*last);
+//
+//		if(size+1 < MAX_NODES){
+//			auto middle = partition(first, last, IsObjectPartOf(axNo, axis, true));
+//			left = ++size;
+//			cmgr.treeArray[left].set(first, middle, depth+1, myId);
+//		}
+//		else throw std::overflow_error("Zu viele Nodes");
+//
+//		vector<u32>::reverse_iterator rfirst(last), rlast(first);
+//
+//		if(size+1 < MAX_NODES){
+//			auto rmiddle = partition(rfirst, rlast, IsObjectPartOf(axNo, axis, false));
+//			right = ++size;
+//			cmgr.treeArray[right].set(rfirst, rmiddle, depth+1, myId);
+//		}
+//		else throw std::overflow_error("Zu viele Nodes");
+//	}
+//	else{ //Dieser Knoten ist ein Blatt
+//		if(cmgr.leafIndexCount + (last - first) > cmgr.MAX_LEAFINDICES)
+//			throw std::overflow_error("Zu viele Leaves");
+//
+//		while(first != last){
+//			cmgr.leafIndices[cmgr.leafIndexCount++] = *first++;
+//		}
+//		axNo = noAxis;
+//	}
+//	
+//	indexEnd = cmgr.leafIndexCount;
 	//sort(&cmgr.leafIndices[indexStart], &cmgr.leafIndices[indexEnd]);
 }
 
@@ -336,51 +337,51 @@ void KDTreeNode::set(vector<u32>::iterator first,
 void KDTreeNode::set(vector<u32>::reverse_iterator first, 
 	vector<u32>::reverse_iterator last, int depth, u32 father)
 {
-	this->father = father;
-	u32 myId = size;
-	auto& cmgr = GLManager::instance().cmgr;
-		
-	indexStart = cmgr.leafIndexCount;
-
-#ifdef DRAW_KDTREE
-	if(myId != 0){
-		aabb1 = cmgr.treeArray[father].aabb1;
-		aabb1[cmgr.treeArray[father].axNo] = cmgr.treeArray[father].axis;
-		aabb2 = cmgr.treeArray[father].aabb2;
-	}
-#endif
-	
-	if(last - first > ELEMENTS_IN_LEAF && depth < MAX_DEPTH){
-
-		vector<u32>::iterator rfirst(last.base()), rlast(first.base());
-
-		boost::tie(axis, axNo) = findGoodAxis(&*rfirst, &*rlast);
-
-		if(size+1 < MAX_NODES){
-			auto middle = partition(first, last, IsObjectPartOf(axNo, axis, true));
-			left = ++size;
-			cmgr.treeArray[left].set(first, middle, depth+1, myId);
-		}
-		else throw std::overflow_error("Zu viele Nodes");
-
-		if(size+1 < MAX_NODES){
-			auto rmiddle = partition(rfirst, rlast, IsObjectPartOf(axNo, axis, false));
-			right = ++size;
-			cmgr.treeArray[right].set(rfirst, rmiddle, depth+1, myId);
-		}
-		else throw std::overflow_error("Zu viele Nodes");
-	}
-	else{ //Dieser Knoten ist ein Blatt
-		if(cmgr.leafIndexCount + (last - first) > cmgr.MAX_LEAFINDICES)
-			throw std::overflow_error("Zu viele Leaves");
-
-		while(first != last){
-			cmgr.leafIndices[cmgr.leafIndexCount++] = *first++;
-		}
-		axNo = noAxis;
-	}
-	
-	indexEnd = cmgr.leafIndexCount;
+//	this->father = father;
+//	u32 myId = size;
+//	auto& cmgr = GLManager::instance().cmgr;
+//		
+//	indexStart = cmgr.leafIndexCount;
+//
+//#ifdef DRAW_KDTREE
+//	if(myId != 0){
+//		aabb1 = cmgr.treeArray[father].aabb1;
+//		aabb1[cmgr.treeArray[father].axNo] = cmgr.treeArray[father].axis;
+//		aabb2 = cmgr.treeArray[father].aabb2;
+//	}
+//#endif
+//	
+//	if(last - first > ELEMENTS_IN_LEAF && depth < MAX_DEPTH){
+//
+//		vector<u32>::iterator rfirst(last.base()), rlast(first.base());
+//
+//		boost::tie(axis, axNo) = findGoodAxis(&*rfirst, &*rlast);
+//
+//		if(size+1 < MAX_NODES){
+//			auto middle = partition(first, last, IsObjectPartOf(axNo, axis, true));
+//			left = ++size;
+//			cmgr.treeArray[left].set(first, middle, depth+1, myId);
+//		}
+//		else throw std::overflow_error("Zu viele Nodes");
+//
+//		if(size+1 < MAX_NODES){
+//			auto rmiddle = partition(rfirst, rlast, IsObjectPartOf(axNo, axis, false));
+//			right = ++size;
+//			cmgr.treeArray[right].set(rfirst, rmiddle, depth+1, myId);
+//		}
+//		else throw std::overflow_error("Zu viele Nodes");
+//	}
+//	else{ //Dieser Knoten ist ein Blatt
+//		if(cmgr.leafIndexCount + (last - first) > cmgr.MAX_LEAFINDICES)
+//			throw std::overflow_error("Zu viele Leaves");
+//
+//		while(first != last){
+//			cmgr.leafIndices[cmgr.leafIndexCount++] = *first++;
+//		}
+//		axNo = noAxis;
+//	}
+//	
+//	indexEnd = cmgr.leafIndexCount;
 	//sort(&cmgr.leafIndices[indexStart], &cmgr.leafIndices[indexEnd]);
 }
 
@@ -392,7 +393,7 @@ KDTreeNode::~KDTreeNode(){
 
 
 std::ostream& operator << (std::ostream& st, const KDTreeNode& node){
-	auto& cmgr = GLManager::instance().cmgr;
+	/*auto& cmgr = GLManager::instance().cmgr;
 	if(node.isLeaf()){
 		st << " ";
 		for(u32 i = node.indexStart; i < node.indexEnd; i++){
@@ -401,6 +402,6 @@ std::ostream& operator << (std::ostream& st, const KDTreeNode& node){
 		return st << endl;
 	}
 	st << "l" << node.axis << cmgr.treeArray[node.left];
-	st << "r" << node.axis << cmgr.treeArray[node.right];
+	st << "r" << node.axis << cmgr.treeArray[node.right];*/
 	return st;
 }

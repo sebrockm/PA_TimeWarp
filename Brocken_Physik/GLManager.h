@@ -12,6 +12,7 @@
 //#include "Geometry.h"
 #include "Timer.h"
 #include "CollisionManager.h"
+#include "TimeWarpManager.h"
 
 using namespace std;
 
@@ -50,7 +51,8 @@ public:
 	bool pause;
 
 	Timer timer;
-	CollisionManager cmgr;
+	//CollisionManager cmgr;
+	TimeWarpManager cmgr;
 
 	int frames;
 

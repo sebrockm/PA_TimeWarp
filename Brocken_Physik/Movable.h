@@ -24,7 +24,7 @@ public:
 	f32 timestamp;
 	int partner;
 
-	bool operator < (const Movable& other) const {
+	CUDA_CALLABLE_MEMBER bool operator < (const Movable& other) const {
 		return timestamp < other.timestamp;
 	}
 

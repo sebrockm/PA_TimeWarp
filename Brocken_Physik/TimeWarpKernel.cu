@@ -1,6 +1,7 @@
 #include "TimeWarpKernel.h"
 
-
+#include "CollisionDetector.h"
+#include "CollisionHandler.h"
 
 __device__ void rollback(Queue<Sphere, QL>* stateQs, 
 	Heap<Message, QL>* inputQs,
@@ -74,17 +75,19 @@ __global__ void handleNextMessages(
 				}
 			}
 		}
+		//printf("while ende\n");
 
 		switch(msg.type)
 		{
 		case Message::event:
-		{
+		{//printf("event\n");
 			int sid = stateQs[id].searchFirstBefore(msg.timestamp);
 			if(sid < 0){
-				printf("siddest < 0\n");
+				printf("sid < 0, denn msg.timestamp == %f und stateQs[%d].back().timestamp == %f\n", msg.timestamp, id, stateQs[id].back().timestamp);
 				return;
 			}
 			if(sid < stateQs[id].length() - 1){//rollback
+				//printf("im rollback\n");
 				rollback(stateQs, inputQs, outputQs, pendings, mailboxes, sid+1, msg, sphereCount);
 			}
 
@@ -94,7 +97,7 @@ __global__ void handleNextMessages(
 				mcs.send(msg.createAck());//Ack senden, damit anderer weiss, dass diese msg tatsaechlich verarbeitet wurde
 				outputQs[id].insertBack(Message(Message::antievent, msg.timestamp, id, msg.src));//antievent als output speichern, damit der andere das Einfuegen des states rueckgaengig machen kann
 			}
-
+			//printf("kurz vor break\n");
 			break;
 		}
 
@@ -272,7 +275,10 @@ __global__ void calculateLVT(
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
 
 	if(id < sphereCount)
+	{
+		//printf("inputQs[%d].top().timestamp == %f && stateQs[%d].back().timestamp == %f \n", id, inputQs[id].top().timestamp, id, stateQs[id].back().timestamp);
 		lvts[id] = min(inputQs[id].top().timestamp, stateQs[id].back().timestamp);
+	}
 }
 
 
@@ -288,15 +294,10 @@ __global__ void deleteOlderThanGVT(
 		return;
 
 	Message msg;
-	while(!outputQs[id].empty() && outputQs[id].front().timestamp < gvt){
+	msg.type = Message::mull;
+	while(outputQs[id].length() > 1 && outputQs[id].front().timestamp < gvt){
 		msg = outputQs[id].peekFront();
 	}
-	if(outputQs[id].empty()){
-		printf("outputQ ist leer, darf nicht sein\n");
-		return;
-	}
-	if(outputQs[id].front().timestamp > gvt)
-		outputQs[id].insertFront(msg);
 
 	Sphere s;
 	while(!stateQs[id].empty() && stateQs[id].front().timestamp < gvt){
@@ -313,6 +314,7 @@ __global__ void deleteOlderThanGVT(
 
 __global__ void cpToStateQs(
 	Sphere* spheres,
+	Sphere* pendings,
 	Queue<Sphere, QL>* stateQs,
 	u32 sphereCount)
 {
@@ -320,8 +322,10 @@ __global__ void cpToStateQs(
 
 	if(id >= sphereCount)
 		return;
-
+	
+	pendings[id].partner = -1;
 	stateQs[id].insertBack(spheres[id]);
+	stateQs[id].back().timestamp = 0;
 }
 
 
@@ -335,10 +339,20 @@ __global__ void cpFromStateQs(
 	if(id >= sphereCount)
 		return;
 	if(stateQs[id].length() != 1){
-		printf("laenge der stateQ ist nicht 1\n");
+		printf("laenge der stateQ ist %d, sollte 1 sein\n", stateQs[id].length());
 	}
-	spheres[id] = stateQs[id].front();
+	spheres[id] = stateQs[id].peekFront();
 }
 
 
+__global__ void removeFromMailboxes(
+	Queue<Message, QL>* mailboxes,
+	u32 sphereCount)
+{
+	int id = threadIdx.x + blockIdx.x*blockDim.x;
 
+	if(id >= sphereCount)
+		return;
+
+	mailboxes[id].removeAll();
+}

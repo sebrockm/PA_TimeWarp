@@ -12,6 +12,11 @@
 #include <cuda_runtime.h>
 
 
+const u32 BSIZE = 1 << 8;
+
+__global__ void removeFromMailboxes(
+	Queue<Message, QL>* mailboxes,
+	u32 sphereCount);
 
 __global__ void deleteOlderThanGVT(
 	Queue<Message, QL>* outputQs,
@@ -21,6 +26,7 @@ __global__ void deleteOlderThanGVT(
 
 __global__ void cpToStateQs(
 	Sphere* spheres,
+	Sphere* pendings,
 	Queue<Sphere, QL>* stateQs,
 	u32 sphereCount);
 
