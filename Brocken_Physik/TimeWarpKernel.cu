@@ -235,6 +235,7 @@ __global__ void detectCollisions(
 		Message msg(Message::event, pendings[id].timestamp, id, id);
 		msg.newState = pendings[id];
 		mcs.send(msg);
+		pendings[id].partner = -1;
 	}
 	else if(nextCol == 2){//Kollision mit Sphere
 		pendings[id] = stateQs[id].back(); //Zustand unmittelbar vor der Kollision
@@ -262,6 +263,7 @@ __global__ void detectCollisions(
 		Message msg(Message::event, tmin, id, id);
 		msg.newState = pendings[id];
 		mcs.send(msg);
+		pendings[id].partner = -1;
 	}
 }
 
