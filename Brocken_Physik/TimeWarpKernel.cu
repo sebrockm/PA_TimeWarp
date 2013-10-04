@@ -14,6 +14,8 @@ __device__ void rollback(Queue<Sphere, QL>* stateQs,
 {
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
 	MessageControllSystem mcs(mailboxes, sphereCount);
+	
+	printf("%d macht einen Rollback\n", id);
 
 	stateQs[id].deleteAllAfterEq(delId);// states loeschen
 
@@ -46,7 +48,8 @@ __global__ void handleNextMessages(
 
 	if(id >= sphereCount)
 		return;
-
+	if(inputQs[id].length() >= 2)
+		printf("inputQs[%d].length() = %d \n", id, inputQs[id].length());
 	
 	MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
 
@@ -81,7 +84,7 @@ __global__ void handleNextMessages(
 		{
 		case Message::event:
 		{//printf("event\n");
-			int sid = stateQs[id].searchFirstBefore(msg.timestamp);
+			int sid = stateQs[id].searchFirstBeforeEq(msg.timestamp);
 			if(sid < 0){
 				printf("sid < 0, denn msg.timestamp == %f und stateQs[%d].back().timestamp == %f\n", msg.timestamp, id, stateQs[id].back().timestamp);
 				return;
@@ -91,7 +94,9 @@ __global__ void handleNextMessages(
 				rollback(stateQs, inputQs, outputQs, pendings, mailboxes, sid+1, msg, sphereCount);
 			}
 
-			stateQs[id].insertBack(msg.newState); //Zustand unmittelbar vor der Kollision
+			stateQs[id].insertBack(msg.newState); //Zustand unmittelbar nach der Kollision
+			//if(msg.newState.partner == -2)
+			//	printf("event: stateQs[%d].insert collision plane \n", id);
 
 			if(msg.src != id){//unsere eigenen events nicht in die outputQ stecken, die kommen von Kollisionen mit Ebenen oder nicht vorhandenen Kollisionen	
 				mcs.send(msg.createAck());//Ack senden, damit anderer weiss, dass diese msg tatsaechlich verarbeitet wurde
@@ -103,7 +108,7 @@ __global__ void handleNextMessages(
 
 		case Message::antievent:
 		{
-			int sid = stateQs[id].searchFirstBefore(msg.timestamp) + 1;
+			int sid = stateQs[id].searchFirstBeforeEq(msg.timestamp) + 1;
 			while(stateQs[id][sid].timestamp == msg.timestamp){//suche state der antimessage
 				if(stateQs[id][sid].partner == msg.src && stateQs[id][sid+1].timestamp == msg.timestamp){//swape gefundenen state mit gleichen timestamps darueber
 					Sphere tmp = stateQs[id][sid];
@@ -127,12 +132,13 @@ __global__ void handleNextMessages(
 		case Message::eventAck:
 		{
 			if(pendings[id].partner != -1 && pendings[id].timestamp == msg.timestamp && msg.src == pendings[id].partner){
-				int sid = stateQs[id].searchFirstBefore(msg.timestamp) + 1;
+				int sid = stateQs[id].searchFirstBeforeEq(msg.timestamp) + 1;
 				if(sid < stateQs[id].length()){//rollback
 					rollback(stateQs, inputQs, outputQs, pendings, mailboxes, sid, msg, sphereCount);
 				}
 
 				stateQs[id].insertBack(pendings[id]);
+				//printf("eventAck: stateQs[%d].insert \n", id);
 				pendings[id].partner = -1;
 			}
 			else{
@@ -209,7 +215,7 @@ __global__ void detectCollisions(
 
 	u32 stateId;
 	for(u32 i = 0; i < sphereCount; i++){
-		for(u32 j = max(0, stateQs[i].searchFirstBefore(stateQs[id].back())); j < stateQs[i].length(); j++){
+		for(u32 j = max(0, stateQs[i].searchFirstBeforeEq(stateQs[id].back())); j < stateQs[i].length(); j++){
 			if(cd(stateQs[id].back(), stateQs[i][j], t)){//t ist Kollisionszeitpunkt mit s1.timestamp als Nullpunkt
 				t += stateQs[id].back().timestamp;
 				if(t < tmin && (j == stateQs[i].length()-1 || t < stateQs[i][j+1].timestamp)){
@@ -231,6 +237,7 @@ __global__ void detectCollisions(
 		pendings[id].moveWithoutA(tmin-pendings[id].timestamp);
 		pendings[id].partner = -2;
 		ch(pendings[id], planes[partner]);
+		pendings[id].moveWithoutA(EPSILON);
 		
 		Message msg(Message::event, pendings[id].timestamp, id, id);
 		msg.newState = pendings[id];
@@ -246,8 +253,10 @@ __global__ void detectCollisions(
 		cp.partner = id;
 		Sphere tmp = cp;
 
-		ch(cp, pendings[id]); // cp ist jetzt neuer state des Partners
-		ch(pendings[id], tmp);//kann sich nicht mit (*) in die Quere kommen
+		ch(cp, pendings[id]); // cp ist jetzt neuer state des Partners		
+		cp.moveWithoutA(EPSILON);
+		ch(pendings[id], tmp);
+		pendings[id].moveWithoutA(EPSILON);
 
 		//event an partner senden
 		Message msg(Message::event, pendings[id].timestamp, id, partner);
@@ -296,21 +305,17 @@ __global__ void deleteOlderThanGVT(
 		return;
 
 	Message msg;
-	msg.type = Message::mull;
-	while(outputQs[id].length() > 1 && outputQs[id].front().timestamp < gvt){
+	while(outputQs[id].length() > 0 && outputQs[id].front().timestamp < gvt){
 		msg = outputQs[id].peekFront();
 	}
 
-	Sphere s;
-	while(!stateQs[id].empty() && stateQs[id].front().timestamp < gvt){
-		s = stateQs[id].peekFront();
+	while(stateQs[id].length() > 1 && stateQs[id][1].timestamp <= gvt){
+		stateQs[id].peekFront();
 	}
 	if(stateQs[id].empty()){
 		printf("stateQ ist leer, darf nicht sein\n");
 		return;
 	}
-	if(stateQs[id].front().timestamp > gvt)
-		stateQs[id].insertFront(s);
 }
 
 
@@ -325,6 +330,10 @@ __global__ void cpToStateQs(
 	if(id >= sphereCount)
 		return;
 	
+	if(!stateQs[id].empty())
+	{
+		printf("stateQs[%d] ist nicht leer \n", id);
+	}
 	pendings[id].partner = -1;
 	stateQs[id].insertBack(spheres[id]);
 	stateQs[id].back().timestamp = 0;
@@ -334,15 +343,15 @@ __global__ void cpToStateQs(
 __global__ void cpFromStateQs(
 	Sphere* spheres,
 	Queue<Sphere, QL>* stateQs,
-	u32 sphereCount)
+	u32 sphereCount, f32 gvt)
 {
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
 
 	if(id >= sphereCount)
 		return;
-	if(stateQs[id].length() != 1){
-		printf("laenge der stateQ ist %d, sollte 1 sein\n", stateQs[id].length());
-	}
+	while(stateQs[id].length() > 1)
+		stateQs[id].peekFront();
+
 	spheres[id] = stateQs[id].peekFront();
 }
 

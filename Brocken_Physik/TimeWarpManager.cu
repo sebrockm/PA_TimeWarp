@@ -141,7 +141,7 @@ void TimeWarpManager::calculateTime(f32 dt, f32 div){
 		deleteOlderThanGVT<<<sphereCount/BSIZE+1, BSIZE>>>(cuOutputQs, cuStateQs, sphereCount, gvt);
 		throwCudaError(cudaDeviceSynchronize());
 	}
-
-	cpFromStateQs<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, cuStateQs, sphereCount);
+	
+	cpFromStateQs<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, cuStateQs, sphereCount, gvt);
 	throwCudaError(cudaDeviceSynchronize());
 }

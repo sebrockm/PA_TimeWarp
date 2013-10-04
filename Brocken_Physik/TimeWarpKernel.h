@@ -33,7 +33,7 @@ __global__ void cpToStateQs(
 __global__ void cpFromStateQs(
 	Sphere* spheres,
 	Queue<Sphere, QL>* stateQs,
-	u32 sphereCount);
+	u32 sphereCount, f32 gvt);
 
 __global__ void calculateLVT(
 	Heap<Message, QL>* inputQs,

@@ -49,11 +49,13 @@ public:
 	}
 
 	CUDA_CALLABLE_MEMBER void insertBack(const Body& b){
+		if(count >= Size) printf("q voll\n");
 		ar[(head+count)%Size] = b;
 		count++;
 	}
 
 	CUDA_CALLABLE_MEMBER void insertFront(const Body& b){
+		if(count >= Size) printf("q voll\n");
 		head = (head + Size - 1) % Size;
 		ar[head] = b;
 		count++;
@@ -89,25 +91,27 @@ public:
 
 	// Index des naechst kleineren als b finden
 	// falls es keinen kleineren als b gibt, wird -1 zurueckgegeben
-	CUDA_CALLABLE_MEMBER int searchFirstBefore(const Body& b) const {
+	CUDA_CALLABLE_MEMBER int searchFirstBeforeEq(const Body& b) const {
 		int first = 0;
-		int last = count - 1;
+		//int last = count - 1;
 
-		while(first < last){
-			u32 middle = (first + last) / 2;
+		//while(first < last){
+		//	u32 middle = (first + last) / 2;
 
-			if((*this)[middle] < b){ //in hinterer Haelfte weitersuchen, middle kann nicht das gesuchte sein
-				first = middle + 1;
-			}
-			else{ //in vorderer Haelfte weitersuchen, middle koennte das gesuchte sein
-				last = middle;
-			}
-		}
+		//	if((*this)[middle] < b){ //in hinterer Haelfte weitersuchen, middle kann nicht das gesuchte sein
+		//		first = middle + 1;
+		//	}
+		//	else{ //in vorderer Haelfte weitersuchen, middle koennte das gesuchte sein
+		//		last = middle;
+		//	}
+		//}
 
-		return first - 1;
+		//return first - 1;
+		while(first < count && (*this)[first] < b) first++;
+		return first;
 	}
 
-	CUDA_CALLABLE_MEMBER int searchFirstBefore(f32 t) const {
+	CUDA_CALLABLE_MEMBER int searchFirstBeforeEq(f32 t) const {
 		int first = 0;
 		//int last = count - 1;
 
@@ -124,13 +128,11 @@ public:
 
 		//return first - 1;
 		while(first < count && (*this)[first].timestamp < t) first++;
-		return first - 1;
+		return first;
 	}
 
 	CUDA_CALLABLE_MEMBER void deleteAllGreaterThan(f32 t) {
-		Body b;
-		b.timestamp = t;
-		count = searchFirstBefore(b) + 1;
+		count = searchFirstBeforeEq(t);
 	}
 
 	CUDA_CALLABLE_MEMBER void deleteAllAfterEq(u32 pos) {

@@ -52,19 +52,19 @@ public:
 	    f32 t2 = (-p12v12 - wurzel)/v12v12;
 
 		/* Ausgabe */
-		if(t1 < 0 && t2 >= 0)
+		if(t1 <= 0 && t2 > 0)
 		{
 			t += t2;
 		}
-		else if(t2 < 0 && t1 >= 0)
+		else if(t2 <= 0 && t1 > 0)
 		{
 			t += t1;
 		}
-		else if(t2 < 0 && t1 < 0)
+		else if(t2 <= 0 && t1 <= 0)
 		{
 			return false;
 		}
-		else if(t2 >= 0 && t1 >= 0)
+		else if(t2 > 0 && t1 > 0)
 		{
 			t += min(t1, t2);
 		}
@@ -102,12 +102,40 @@ public:
 		//}
 		//
 		//return false;
-		f32 tmp = s.v * p.n;
-		if(tmp == 0)
+		f32 vn = s.v * p.n;
+		if(vn == 0)
 			return false;
 
-		t = ((p.orientatedDistanceTo(s.x)>0 ? s.r : -s.r) + p.d - s.x*p.n) / tmp;
-		return t >= 0;
+		f32 an = p.n[1] * (-9.81f);
+		f32 r = p.orientatedDistanceTo(s.x)>0 ? s.r : -s.r;
+		/*if(an == 0){*/
+			t = (r + p.d - s.x*p.n) / vn;
+			return t > 0;
+		/*}
+
+		f32 vnan = vn/an;
+
+		f32 wurzel = sqrt(2/an*(r + p.d - s.x*p.n) + vnan*vnan);
+		f32 t1 = - vnan + wurzel;
+		f32 t2 = - vnan - wurzel;
+		if(t1 <= 0 && t2 > 0)
+		{
+			t = t2;
+		}
+		else if(t2 <= 0 && t1 > 0)
+		{
+			t = t1;
+		}
+		else if(t2 <= 0 && t1 <= 0)
+		{
+			printf("hier \n");
+			return false;
+		}
+		else if(t2 > 0 && t1 > 0)
+		{
+			t = min(t1, t2);
+		}
+		return true;*/
 	}
 
 	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, Vector3f& pt) const{return false;}

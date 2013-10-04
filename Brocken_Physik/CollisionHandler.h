@@ -310,13 +310,13 @@ public:
 		f32 mue = staticFricCoef[s.k][p.k];									
 
 		// Radius als Vektor
-		Vector3f r = p.n * (p.orientatedDistanceTo(s.x))>0 ? (-s.r) : (s.r);
+		Vector3f r = p.n * (p.orientatedDistanceTo(s.x)>0 ? (-s.r) : (s.r));
 
 		//neuer Parallelteil der Rotation
 		Vector3f omegaParNeu = (1.f-5.f/7*mue) * omegaPar - 
 			5.f/7*mue / (s.r*s.r) * r.crossProduct(vPar);
 
-		f32 f = fNearlyEqual(abs(p.n[1]),1.f) ? 1 : .99f;
+		f32 f = fNearlyEqual(abs(p.n[1]),1.f) ? .99f : 1;
 
 		//neue Winkelgeschwindigkeit
 		s.omega = f*(omegaParNeu + /*res **/ omegaOrth);
@@ -325,8 +325,6 @@ public:
 		s.v = f*(-res*vOrth //neuer Orthogonalteil
 			+ (1-mue) * vPar + crossProduct((1-mue)*omegaPar-omegaParNeu, r));
 	}
-
-
 
 
 
