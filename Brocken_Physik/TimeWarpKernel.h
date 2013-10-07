@@ -22,7 +22,7 @@ __global__ void deleteOlderThanGVT(
 	Queue<Message, QL>* outputQs,
 	Queue<Sphere, QL>* stateQs, 
 	u32 sphereCount,
-	f32 gvt);
+	f64 gvt);
 
 __global__ void cpToStateQs(
 	Sphere* spheres,
@@ -33,12 +33,12 @@ __global__ void cpToStateQs(
 __global__ void cpFromStateQs(
 	Sphere* spheres,
 	Queue<Sphere, QL>* stateQs,
-	u32 sphereCount, f32 gvt);
+	u32 sphereCount, f64 gvt);
 
 __global__ void calculateLVT(
 	Heap<Message, QL>* inputQs,
 	Queue<Sphere, QL>* stateQs,
-	f32* lvts,
+	f64* lvts,
 	u32 sphereCount);
 
 
@@ -48,7 +48,7 @@ __global__ void detectCollisions(
 	Sphere* pendings,
 	Queue<Message, QL>* outputQs,
 	Queue<Sphere, QL>* stateQs, u32 sphereCount, 
-	f32 tmin);
+	f64 tmin);
 
 __global__ void receiveFromMailboxes( 
 	Heap<Message, QL>* inputQs, 

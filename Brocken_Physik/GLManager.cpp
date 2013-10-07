@@ -168,8 +168,8 @@ void GLManager::handleMouseInput(int key, int state, int x, int y){
 	}
 	else if(key == GLUT_RIGHT_BUTTON && state == GLUT_UP) {
 		Sphere& s = instance().cmgr.spheres[instance().cmgr.addSphere()];
-		s.x = instance().cam.pos+instance().cam.viewDir*2;
-		s.v = instance().cam.viewDir*10;
+		s.x = instance().cam.pos+instance().cam.viewDir*2.f;
+		s.v = instance().cam.viewDir*10.f;
 		s.r = .4f;
 		s.m = 10;
 		s.k = (Material)(rand()%material_N);

@@ -171,6 +171,14 @@ public:
 		return 0;
 	}
 
+	template <class S>
+	CUDA_CALLABLE_MEMBER operator Vector<S, dim> () const {
+		Vector<S, dim> erg;
+		for(int i=0;i<dim;i++)
+			erg[i] = (S)x[i];
+		return erg;
+	}
+
 	CUDA_CALLABLE_MEMBER T operator * (const Vector<T, dim>& rhs) const {
 		T sum = 0;
 		for(int i=0;i<dim;i++)
@@ -263,8 +271,8 @@ CUDA_CALLABLE_MEMBER Vector<T, 3> crossProduct(const Vector<T, 3>& lhs, const Ve
 
 #ifdef __CUDACC__
 template <u32 dim>
-__inline__ __device__ Vector<float, dim> atomicAdd(Vector<float, dim>* addr, const Vector<float, dim>& value){
-	Vector<float, dim> ret;
+__inline__ __device__ Vector<f32, dim> atomicAdd(Vector<f32, dim>* addr, const Vector<f32, dim>& value){
+	Vector<f32, dim> ret;
 	for(u32 i=0; i<dim; i++)
 		ret[i] = atomicAdd(&(*addr)[i], value[i]);
 	return ret;
@@ -274,7 +282,8 @@ __inline__ __device__ Vector<float, dim> atomicAdd(Vector<float, dim>* addr, con
 
 typedef Vector<f32, 3> Vector3f;
 typedef Vector<f32, 4> Vector4f;
-
+typedef Vector<f64, 3> Vector3d;
+typedef Vector<f64, 4> Vector4d;
 
 
 

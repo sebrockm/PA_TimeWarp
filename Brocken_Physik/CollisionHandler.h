@@ -113,13 +113,13 @@ public:
 		omegaPar += invTheta * crossProduct(r, F);
 
 		//neue Winkelgeschwindigkeit
-		dRot += .9f*(omegaPar + (1-mue)*omegaOrth - c.omega);
+		dRot += (f32).9*(omegaPar + (1-mue)*omegaOrth - c.omega);
 
 		//neue Parallelgeschwindigkeit abhängig von Reibung
 		vPar = mue * crossProduct(r, omegaPar);
 
 		//neue Geschwindigkeit
-		dSpeed += .9f*(vOrth + vPar - vPar.getParallelPartToNormal(p.n) - c.v);
+		dSpeed += (f32).9*(vOrth + vPar - vPar.getParallelPartToNormal(p.n) - c.v);
 	}
 
 	CUDA_CALLABLE_MEMBER void operator () (
@@ -287,11 +287,14 @@ public:
 		//neue Geschwindigkeiten
 		s1.v = (tmpv - res * s2.m * (v1Orth-v2Orth)) / m //neuer Orthogonalteil
 			+ (1-mue) * v1Par + crossProduct((1-mue)*omega1Par-omegaParNeu, r1); //neuer Parallelteil;
+
+		//printf("vneu: (%f,%f,%f)\n", s1.v[0], s1.v[1], s1.v[2]);
 	}
 
 	CUDA_CALLABLE_MEMBER void operator () (
 		Sphere& s, const Plane& p) const
 	{
+		//s.x += correctPosition(s, p);
 
 		//Teil der Geschwindigkeit, der senkrecht zur Ebene liegt
 		Vector3f vOrth = s.v.getParallelPartToNormal(p.n);
@@ -316,7 +319,7 @@ public:
 		Vector3f omegaParNeu = (1.f-5.f/7*mue) * omegaPar - 
 			5.f/7*mue / (s.r*s.r) * r.crossProduct(vPar);
 
-		f32 f = fNearlyEqual(abs(p.n[1]),1.f) ? .99f : 1;
+		f32 f = fEqual(abs(p.n[1]),1.f) ? .99f : 1;
 
 		//neue Winkelgeschwindigkeit
 		s.omega = f*(omegaParNeu + /*res **/ omegaOrth);
@@ -413,7 +416,7 @@ public:
 		Vector3f omegaParNeu = (1.f-5.f/7*mue) * omegaPar - 
 			5.f/7*mue / (s.r*s.r) * r.crossProduct(vPar);
 
-		f32 f = fNearlyEqual(abs(p.n[1]),1.f) ? 1 : .99f;
+		f32 f = fEqual(abs(p.n[1]),(f32)1.) ? 1 : (f32).99;
 
 		//neue Winkelgeschwindigkeit
 		dRot += f*(omegaParNeu + /*res **/ omegaOrth - s.omega);

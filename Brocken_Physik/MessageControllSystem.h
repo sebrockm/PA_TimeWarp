@@ -11,12 +11,12 @@ struct Message{
 		eventNack,
 		mull
 	} type;
-	f32 timestamp;
+	f64 timestamp;
 	u32 src, dest;
 	Sphere newState;
 
 	CUDA_CALLABLE_MEMBER Message(){};
-	CUDA_CALLABLE_MEMBER Message(MsgType ty, f32 t, u32 src, u32 dest):type(ty),timestamp(t),src(src),dest(dest){}
+	CUDA_CALLABLE_MEMBER Message(MsgType ty, f64 t, u32 src, u32 dest):type(ty),timestamp(t),src(src),dest(dest){}
 
 	CUDA_CALLABLE_MEMBER bool operator < (const Message& b) const {
 		if(timestamp < b.timestamp)

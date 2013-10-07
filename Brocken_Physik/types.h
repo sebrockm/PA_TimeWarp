@@ -24,10 +24,10 @@ typedef double	f64;
 
 #ifdef __CUDA_ARCH__
 #define INFINITY CUDART_INF_F
-#define EPSILON .00000001f
+#define EPSILON .000001f
 #else
 const f32 INFINITY = std::numeric_limits<f32>::infinity();
-const f32 EPSILON = .00000001f;
+const f32 EPSILON = .000001f;
 #endif
 
 template <class T>
@@ -59,35 +59,69 @@ CUDA_CALLABLE_MEMBER inline bool fNearlyEqual(const f64& a, const f64& b){
 #endif
 }
 
-CUDA_CALLABLE_MEMBER inline bool fEqual(f64 a, f64 b){
+#define GENAU
+
+template <class T>
+CUDA_CALLABLE_MEMBER inline bool fEqual(T a, T b){
+#ifdef GENAU
+	return a == b;
+#else
 	return fabs(a - b) <= EPSILON;
+#endif
 }
 
-CUDA_CALLABLE_MEMBER inline bool fLess(f64 a, f64 b){
+template <class T>
+CUDA_CALLABLE_MEMBER inline bool fLess(T a, T b){
+#ifdef GENAU
+	return a < b;
+#else
 	return a - b <= -EPSILON;
+#endif
 }
 
-CUDA_CALLABLE_MEMBER inline bool fGreater(f64 a, f64 b){
+template <class T>
+CUDA_CALLABLE_MEMBER inline bool fGreater(T a, T b){
+#ifdef GENAU
+	return a > b;
+#else
 	return a - b >= EPSILON;
+#endif
 }
 
-CUDA_CALLABLE_MEMBER inline bool fnEqual(f64 a, f64 b){
+template <class T>
+CUDA_CALLABLE_MEMBER inline bool fnEqual(T a, T b){
+#ifdef GENAU
+	return a != b;
+#else
 	return fLess(a, b) || fGreater(a, b);
+#endif
 }
 
-CUDA_CALLABLE_MEMBER inline bool fLessEq(f64 a, f64 b){
+template <class T>
+CUDA_CALLABLE_MEMBER inline bool fLessEq(T a, T b){
+#ifdef GENAU
+	return a <= b;
+#else
 	return a - b <= EPSILON;
+#endif
 }
 
-CUDA_CALLABLE_MEMBER inline bool fGreaterEq(f64 a, f64 b){
+template <class T>
+CUDA_CALLABLE_MEMBER inline bool fGreaterEq(T a, T b){
+#ifdef GENAU
+	return a >= b;
+#else
 	return a - b >= -EPSILON;
+#endif
 }
 
-CUDA_CALLABLE_MEMBER inline bool equalSign(f64 f1, f64 f2){
+template <class T>
+CUDA_CALLABLE_MEMBER inline bool equalSign(T f1, T f2){
 	return f1 * f2 >= 0.;
 }
 
-inline f32 mod(f32 a, f32 b){
+template <class T>
+inline T mod(T a, T b){
 	 return a - b * std::floor(a/b);
 }
 

@@ -21,7 +21,7 @@ public:
 
 	Material k;
 
-	f32 timestamp;
+	f64 timestamp;
 	int partner;
 
 	CUDA_CALLABLE_MEMBER bool operator < (const Movable& other) const {
@@ -31,30 +31,34 @@ public:
 	CUDA_CALLABLE_MEMBER Movable(const Vector3f& pos = Vector3f(), const f32& m = 1)
 	:x(pos),v(),/*a(0,-9.81f,0),*/m(m),phi(1,0,0,0),omega(),k(rubber),timestamp(0),partner(-1){}
 
-	CUDA_CALLABLE_MEMBER void move(f32 dt){
-		v[1] -= 9.81f*dt;
+	CUDA_CALLABLE_MEMBER void move(f64 dt){
+		v[1] -= (f32)9.81*dt;
 		x += v*dt;
 
 		phi = createRotationQuaternion(omega.length()*dt, omega.getNormalized()) * phi;
 	}
 
-	CUDA_CALLABLE_MEMBER void moveWithoutA(f32 dt){
-		if(partner <= -2 && v.lengthSqr() < EPSILON && omega.lengthSqr() < EPSILON){
+	CUDA_CALLABLE_MEMBER void moveWithoutA(f64 dt){
+		if(false/*partner <= -2 && v.lengthSqr() < EPSILON && omega.lengthSqr() < EPSILON*/){
 			v = Vector3f();
 			omega = Vector3f();
 		}
 		else{
 			x += v*dt;
 			//x[1] -= .5f*9.81f*dt*dt;
-			v[1] -= 9.81f*dt;
+			v[1] -= (f32)9.81*dt;
 			phi = createRotationQuaternion(omega.length()*dt, omega.getNormalized()) * phi;
 		}
 
 		timestamp += dt;
 	}
 
-	CUDA_CALLABLE_MEMBER void moveOnlyA(f32 dt){
-		v[1] -= 9.81f*dt;
+	CUDA_CALLABLE_MEMBER void moveOnlyA(f64 dt){
+		v[1] -= (f32)9.81*dt;
+	}
+
+	CUDA_CALLABLE_MEMBER bool isStill() const {
+		return partner <= -2 && v.lengthSqr() < EPSILON && omega.lengthSqr() < EPSILON;
 	}
 };
 
