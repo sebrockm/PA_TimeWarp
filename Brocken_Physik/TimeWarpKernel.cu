@@ -15,7 +15,7 @@ __device__ void rollback(Queue<Sphere, QL>* stateQs,
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
 	MessageControllSystem mcs(mailboxes, sphereCount);
 	
-	printf("%d macht einen Rollback\n", id);
+	//printf("%d macht einen Rollback\n", id);
 
 	stateQs[id].deleteAllAfterEq(delId);// states loeschen
 
@@ -215,16 +215,7 @@ __global__ void detectCollisions(
 
 	u32 stateId;
 	for(u32 i = 0; i < sphereCount; i++){
-		for(u32 j = max(0, stateQs[i].searchFirstBeforeEq(stateQs[id].back())); j < stateQs[i].length(); j++){
-			if(cd(stateQs[id].back(), stateQs[i][j], t)){//t ist Kollisionszeitpunkt mit s1.timestamp als Nullpunkt
-				t += stateQs[id].back().timestamp;
-				if(t < tmin && (j == stateQs[i].length()-1 || t < stateQs[i][j+1].timestamp)){
-					partner = i;
-					stateId = j;
-					tmin = t;
-					nextCol = 2;
-					break;
-				}
+		for(u32 j = max(0, stateQs[i].searchFirstBeforeEq(stateQs[id].back())); j < stateQs[i].length(); j++){w
 			}
 		}
 	}
