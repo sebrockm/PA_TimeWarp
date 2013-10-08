@@ -85,6 +85,7 @@ public:
 		else if(fLessEq(t2, 0.) && fLessEq(t1, 0.))
 		{
 			//printf("t2 <= 0 && t1 <= 0 \n");
+			printf("omg2... %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
 			return false;
 		}
 		else if(fGreater(t2, 0.) && fGreater(t1, 0.))
@@ -104,7 +105,8 @@ public:
 		//	t += EPSILON;
 		//}
 		else{
-			printf("omg...\n");
+			printf("omg... %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
+			
 			return false;
 		}
 		//else if(t2 == 0 && t1 == 0)

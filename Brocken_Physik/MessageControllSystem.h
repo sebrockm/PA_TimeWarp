@@ -1,7 +1,12 @@
+#ifndef _MESSAGECONTROLLSYSTEM_H_
+#define _MESSAGECONTROLLSYSTEM_H_
+
+
 #include "types.h"
 #include "cuda_macro.h"
 #include "Queue.h"
 #include "Heap.h"
+#include "Sphere.h"
 
 struct Message{
 	enum MsgType{
@@ -110,3 +115,6 @@ public:
 	}
 #endif
 };
+
+
+#endif

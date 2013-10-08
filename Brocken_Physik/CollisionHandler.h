@@ -252,6 +252,13 @@ public:
 		Sphere& s1, const Sphere& s2) const
 	{
 		Vector3f n = (s2.x-s1.x).getNormalized();
+		Plane p(n, (s1.x+s2.x)*.5);
+
+		if((s2.x - s1.x).length() < s1.r + s2.r){
+			printf("Positionskorrektur, Abstand vorher: %f ", (s2.x - s1.x).length() - (s1.r + s2.r));
+			s1.x += correctPosition(s1, p);
+			printf("Abstand nachher: %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
+		}
 
 		//Teile der Geschwindigkeiten, die senkrecht zur Berührebene liegen
 		Vector3f v1Orth = s1.v.getParallelPartToNormal(n);
@@ -294,7 +301,11 @@ public:
 	CUDA_CALLABLE_MEMBER void operator () (
 		Sphere& s, const Plane& p) const
 	{
-		//s.x += correctPosition(s, p);
+		if(p.distanceTo(s.x) < s.r){
+			printf("Positionskorrektur, Abstand vorher: %f ", p.distanceTo(s.x)-s.r);
+			s.x += correctPosition(s, p);
+			printf("Abstand nachher: %f\n", p.distanceTo(s.x)-s.r);
+		}
 
 		//Teil der Geschwindigkeit, der senkrecht zur Ebene liegt
 		Vector3f vOrth = s.v.getParallelPartToNormal(p.n);
