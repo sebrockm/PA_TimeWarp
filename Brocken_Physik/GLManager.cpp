@@ -114,7 +114,7 @@ void GLManager::handleKeyUp(u8 key, int x, int y){
 }
 
 void GLManager::handleKeyDown(u8 key, int x, int y){
-	const f32 speed = .2f;
+	const f32 speed = 2.f;
 
 	switch(key){
 	case 'w': instance().camMovement[0] = speed; break;
@@ -128,23 +128,23 @@ void GLManager::handleKeyDown(u8 key, int x, int y){
 }
 
 void GLManager::timerFunc(){	
-	static f32 t = 0;
-	static Array<f32, 60> fps;
+	static f64 t = 0;
+	static Array<f64, 60> fps;
 	static int i = 0;
 
 	if(!instance().pause){
-		f32 dt = instance().timer.tick();//.0167f;
+		f64 dt = instance().timer.tick();//.0167f;
 		
-		instance().cmgr.calculateTime(min(dt, 1.f/60), instance().div);
+		instance().cmgr.calculateTime(min(dt, 1./90), instance().div);
 		fps[i++] = 1/dt;
 		i %= fps.size();
 
 		t += dt;
-		if(t > 1.f/30){
+		if(t > 1./30){
 			glutPostRedisplay();
 			t = 0;
 
-			f32 sum = 0;
+			f64 sum = 0;
 			for(int j=0; j<fps.size(); j++){
 				sum += fps[j];
 			}

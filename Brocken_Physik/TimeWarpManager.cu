@@ -5,6 +5,10 @@
 
 #include <thrust\reduce.h>
 #include <thrust\functional.h>
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
 
 
 TimeWarpManager::TimeWarpManager(u32 maxPlane, u32 maxSpheres)
@@ -93,17 +97,17 @@ u32 TimeWarpManager::addPlane(int n){
 }
 
 
-void TimeWarpManager::calculateTime(f32 dt, f32 div){
-	f64 ddt = (f64)dt / (f64)div;
+void TimeWarpManager::calculateTime(f64 dt, f64 div){
+	dt /= div;
 
 	cpToStateQs<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, cuPendings, cuStateQs, sphereCount);
 	throwCudaError(cudaDeviceSynchronize());
 
 	f64 gvt = 0;
 
-	while(gvt < ddt){
+	while(gvt < dt){
 		//initiale Kollisionen bestimmen und entsprechende Nachrichten verschicken
-		detectCollisions<<<sphereCount/BSIZE+1, BSIZE>>>(cuPlanes, planeCount, cuMailboxes, cuPendings, cuOutputQs, cuStateQs, sphereCount, ddt);
+		detectCollisions<<<sphereCount/BSIZE+1, BSIZE>>>(cuPlanes, planeCount, cuMailboxes, cuPendings, cuOutputQs, cuStateQs, sphereCount, dt);
 		throwCudaError(cudaDeviceSynchronize());
 
 		//Nachrichten in die inputQs stecken
@@ -135,11 +139,13 @@ void TimeWarpManager::calculateTime(f32 dt, f32 div){
 		//neue gvt berechnen
 		calculateLVT<<<sphereCount/BSIZE+1, BSIZE>>>(cuInputQs, cuStateQs, cuLvts, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
-		gvt = thrust::reduce(lvts, lvts+sphereCount, 1000000.f, thrust::min<f64>);
+		gvt = thrust::reduce(lvts, lvts+sphereCount, 1000000., thrust::min<f64>);
 		
 		//alte Sachen loeschen
 		deleteOlderThanGVT<<<sphereCount/BSIZE+1, BSIZE>>>(cuOutputQs, cuStateQs, sphereCount, gvt);
 		throwCudaError(cudaDeviceSynchronize());
+
+		//cout << "max Q length: " << max_element(stateQs, stateQs+sphereCount)->length() << endl;;
 	}
 	
 	cpFromStateQs<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, cuStateQs, sphereCount, gvt);

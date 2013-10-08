@@ -22,11 +22,11 @@ public:
 		last = steady_clock::now();
 	}
 
-	f32 tick(){
+	f64 tick(){
 		now = steady_clock::now();
 		steady_clock::duration dif = now - last;
 		last = now;
-		return static_cast<f32>(dif.count()) * steady_clock::period::num / steady_clock::period::den;
+		return static_cast<f64>(dif.count()) * steady_clock::period::num / steady_clock::period::den;
 		return .01667f;
 	}
 

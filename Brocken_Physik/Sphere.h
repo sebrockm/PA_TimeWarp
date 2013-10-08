@@ -24,7 +24,7 @@ public:
 	CUDA_CALLABLE_MEMBER void set(const Vector3d& pos, const f32& r, Material k = rubber, const f32& m = 1);
 
 	CUDA_CALLABLE_MEMBER Matrix4f getModel2World() const {
-		return createTranslationMatrix((Vector3f)x) * phi.getMatrix4() * createScalarMatrix(r,r,r);
+		return createTranslationMatrix((Vector3f)x) * phi.getMatrix4() * createScalarMatrix((f32)r,(f32)r,(f32)r);
 	}
 };
 

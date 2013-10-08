@@ -255,9 +255,9 @@ public:
 		Plane p(n, (s1.x+s2.x)*.5);
 
 		if((s2.x - s1.x).length() < s1.r + s2.r){
-			printf("Positionskorrektur, Abstand vorher: %f ", (s2.x - s1.x).length() - (s1.r + s2.r));
+			f64 tmp = (s2.x - s1.x).length() - (s1.r + s2.r);
 			s1.x += correctPosition(s1, p);
-			printf("Abstand nachher: %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
+			printf("Positionskorrektur SS, Abstand vorher: %f Abstand nachher: %f\n", tmp, (s2.x - s1.x).length() - (s1.r + s2.r));
 		}
 
 		//Teile der Geschwindigkeiten, die senkrecht zur Berührebene liegen
@@ -302,9 +302,9 @@ public:
 		Sphere& s, const Plane& p) const
 	{
 		if(p.distanceTo(s.x) < s.r){
-			printf("Positionskorrektur, Abstand vorher: %f ", p.distanceTo(s.x)-s.r);
+			f64 tmp = p.distanceTo(s.x)-s.r;
 			s.x += correctPosition(s, p);
-			printf("Abstand nachher: %f\n", p.distanceTo(s.x)-s.r);
+			printf("Positionskorrektur SP, Abstand vorher: %f Abstand nachher: %f\n", tmp, p.distanceTo(s.x)-s.r);
 		}
 
 		//Teil der Geschwindigkeit, der senkrecht zur Ebene liegt
@@ -558,20 +558,20 @@ public:
 
 
 private:
-	CUDA_CALLABLE_MEMBER Vector3f correctPosition(const Sphere& s, const Plane& p) const{
+	CUDA_CALLABLE_MEMBER Vector3d correctPosition(const Sphere& s, const Plane& p) const{
 		//Position der Kugel sollte auf jeden Fall vollständig "diesseits"
 		//der Ebene bleiben. Dazu einfach die neue Position der Kugel 
 		//korrigieren, indem senkrecht zur Ebene zurückgesetzt wird
-		f32 d = p.orientatedDistanceTo(s.x);
+		f64 d = p.orientatedDistanceTo(s.x);
 
 		//in Abhängigkeit von der Seite, auf der sich der Mittelpunkt befindet,
 		//entweder den Radius zum Abstand addieren oder subtrahieren
-		f32 r = s.r + EPSILON;
+		f64 r = s.r + GAMMA;
 		d += d>0 ? -r : r;
 		
 		//s.x -= d*p.n;//Position korrigieren
 
-		return -d*p.n;
+		return -d*(Vector3d)p.n;
 	}
 
 	CUDA_CALLABLE_MEMBER Vector3f correctPosition(const Cuboid& c, const Plane& p) const {

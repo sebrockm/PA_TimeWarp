@@ -63,7 +63,7 @@ public:
 	
 	u32 addPlane(int n = 1);
 
-	void calculateTime(f32 dt, f32 div = 1);
+	void calculateTime(f64 dt, f64 div = 1);
 
 	template <class T>
 	u32 getOffset() const {

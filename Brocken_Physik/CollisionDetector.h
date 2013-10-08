@@ -22,11 +22,11 @@ public:
 		f64 tdiff = s1.timestamp - s2.timestamp;
 		t = 0;
 		if(fGreater(tdiff, 0.)){//t bezieht sich auf s1.timestamp als Nullpunkt
-			p12 -= tdiff*(Vector3d)s2.v;
+			p12 -= tdiff*s2.v;
 			t = 0;
 		}
 		else{
-			p12 -= tdiff*(Vector3d)s1.v;
+			p12 -= tdiff*s1.v;
 			t = -tdiff;
 		}
 
@@ -34,14 +34,19 @@ public:
 		f64 p12v12 = p12 * v12;
 		f64 v12v12 = v12 * v12;
 		f64 p12p12 = p12 * p12;
-		f64 r = s1.r + s2.r + EPSILON;
+		f64 r = s1.r + s2.r;
 
-		if(fEqual(v12v12, 0.)){
-			if(fEqual(p12v12, 0.)){
+		if(p12.length() < r)
+			return true;
+
+		if(v12v12 < GAMMA){
+			if(fabs(p12v12) < GAMMA){
 				//printf("s1.v == (%f,%f,%f) && s2.v == (%f,%f,%f) \n", s1.v[0], s1.v[1], s1.v[2], s2.v[0], s2.v[1], s2.v[2]);
 				//printf("v12v12 == 0 && p12v12 == 0 \n");
-				if(fEqual(p12p12, r * r)){
+				if(fabs(p12p12 - r * r) < GAMMA){
 					//t += EPSILON;
+					if(t >= EPSILON)
+						t -= EPSILON;
 					return true;
 				}
 				return false;
@@ -51,6 +56,8 @@ public:
 				f64 t1 = (r * r - p12p12) / (2 * p12v12); 
 				if(fGreater(t1, 0.)){
 					t += t1;
+					if(t >= EPSILON)
+						t -= EPSILON;
 					return true;
 				}
 				return false;
@@ -72,20 +79,24 @@ public:
 	    f64 t2 = (-p12v12 - wurzel)/v12v12;
 
 		/* Ausgabe */
-		if(fLess(t1, 0.) && fGreater(t2, 0.))
+		if(fLessEq(t1, 0.) && fGreater(t2, 0.))
 		{
 			//printf("t1 < 0 && t2 > 0 \n");
 			t += t2;
+			if(t >= EPSILON)
+				t -= EPSILON;
 		}
-		else if(fLess(t2, 0.) && fGreater(t1, 0.))
+		else if(fLessEq(t2, 0.) && fGreater(t1, 0.))
 		{
 			//printf("t2 < 0 && t1 > 0 \n");
 			t += t1;
+			if(t >= EPSILON)
+				t -= EPSILON;
 		}
 		else if(fLessEq(t2, 0.) && fLessEq(t1, 0.))
 		{
 			//printf("t2 <= 0 && t1 <= 0 \n");
-			printf("omg2... %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
+			//printf("omg2... %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
 			return false;
 		}
 		else if(fGreater(t2, 0.) && fGreater(t1, 0.))
@@ -93,101 +104,39 @@ public:
 			//printf("t2 > 0 && t1 > 0 \n");
 
 			t += min(t1, t2);
+			if(t >= EPSILON)
+				t -= EPSILON;
 		}
-		//else if(fEqual(t1, 0.) && fnEqual(t2, 0.))
-		//{
-		//	printf("t1 == 0 && t2 != 0 \n");
-		//	t += EPSILON;
-		//}
-		//else if(fEqual(t2, 0.) && fnEqual(t1, 0.))
-		//{
-		//	printf("t2 == 0 && t1 != 0 \n");
-		//	t += EPSILON;
-		//}
 		else{
-			printf("omg... %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
-			
+			//printf("omg... %f\n", (s2.x - s1.x).length() - (s1.r + s2.r));
+			//while(1);
 			return false;
 		}
-		//else if(t2 == 0 && t1 == 0)
-		//{
-		//	return false;
-		//}
+
 		return true;
-
-		/* TODO */
-		//wenn der Abstand der nächsten Mittelpunkte kleiner ist als die beiden Radien,
-		//dann hat eine Kollision stattgefunden
-		//f32 len = p12.length();
-		//if(fLess(len, r)){
-		//	//darauf achten, dass die Kugeln sich aufeinander zu bewegen
-		//	n = (-p12).getNormalized();
-		//	Vector3f v = s2.v - s1.v;
-		//	//v = v.getParallelPartToNormal(n);
-		//	if(fLess(v*n, 0)){
-		//		pt = .5f*(s1.x+s2.x + (s1.r-s2.r)*n);
-		//		return true;
-		//	}
-		//}
-
-		//return false;
 	}
 
 
 	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, /*Vector3f& pt*/ f64& t) const{
-		if(p.distanceTo(s.x) < s.r)
-			printf("Kugel in Ebene\n");
-		//f32 d = p.orientatedDistanceTo(s.x);
-		//if(abs(d) < s.r){
-		//	//darauf achten, dass sich die Kugel auf die Ebene zu bewegt
-		//	//Vector3f v = s.v.getParallelPartToNormal(p.n);
-		//	if(fLess(d * (s.v*p.n), 0)){
-		//		pt = s.x - d*p.n;
-		//		return true;
-		//	}
-		//}
-		//
-		//return false;
 		f64 vn = s.v * p.n;
 		if(fEqual(vn, 0.)){
-			if(fEqual(p.distanceTo(s.x), s.r)){
-				//t = 0;
+			if(fEqual(p.distanceTo(s.x), (f64)s.r)){
+				printf("vn == 0 && p.distanceTo(s.x) == s.r\n");
 				t = EPSILON;
 				return true;
 			}
 			return false;
 		}
 
-		//f32 an = p.n[1] * (-9.81f);
 		f64 r = (p.orientatedDistanceTo(s.x)>0 ? s.r : -s.r);// + EPSILON;
-		/*if(an == 0){*/
-			t = (r + p.d - s.x*p.n) / vn;
-			return fGreater(t, 0.);
-		/*}
 
-		f32 vnan = vn/an;
+		t = (r + p.d - s.x*p.n) / vn;
+		if(t >= EPSILON)
+			t -= EPSILON;
+		else if(t > 0)
+			return true;
 
-		f32 wurzel = sqrt(2/an*(r + p.d - s.x*p.n) + vnan*vnan);
-		f32 t1 = - vnan + wurzel;
-		f32 t2 = - vnan - wurzel;
-		if(t1 <= 0 && t2 > 0)
-		{
-			t = t2;
-		}
-		else if(t2 <= 0 && t1 > 0)
-		{
-			t = t1;
-		}
-		else if(t2 <= 0 && t1 <= 0)
-		{
-			printf("hier \n");
-			return false;
-		}
-		else if(t2 > 0 && t1 > 0)
-		{
-			t = min(t1, t2);
-		}
-		return true;*/
+		return fGreaterEq(t, 0.);
 	}
 
 	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, Vector3f& pt) const{return false;}

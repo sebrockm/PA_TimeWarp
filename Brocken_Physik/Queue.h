@@ -6,7 +6,7 @@
 #include "types.h"
 
 
-const u32 QL = 20;
+const u32 QL = 100;
 
 
 template <class Body, u32 Size>
@@ -18,6 +18,10 @@ private:
 
 public:
 	Queue():head(0), count(0), ar() {}
+
+	bool operator < (const Queue<Body, Size>& other) const {
+		return length() < other.length();
+	}
 
 	CUDA_CALLABLE_MEMBER const Body& front() const {
 		return ar[head];

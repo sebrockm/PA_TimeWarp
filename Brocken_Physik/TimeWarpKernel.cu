@@ -48,8 +48,6 @@ __global__ void handleNextMessages(
 
 	if(id >= sphereCount)
 		return;
-	if(inputQs[id].length() >= 2)
-		printf("inputQs[%d].length() = %d \n", id, inputQs[id].length());
 	
 	MessageControllSystem mcs(inputQs, mailboxes, sphereCount);
 
@@ -138,7 +136,7 @@ __global__ void handleNextMessages(
 				}
 
 				stateQs[id].insertBack(pendings[id]);
-				printf("eventAck: stateQs[%d].insert \n", id);
+				//printf("eventAck: stateQs[%d].insert \n", id);
 				pendings[id].partner = -1;
 			}
 			else{
@@ -217,16 +215,25 @@ __global__ void detectCollisions(
 
 	u32 stateId;
 	for(u32 i = 0; i < sphereCount; i++){
+		if(i == id)
+			continue;
+
 		for(u32 j = max(0, stateQs[i].searchFirstBeforeEq(stateQs[id].back())); j < stateQs[i].length(); j++){
-			if(i != id && cd(stateQs[id].back(), stateQs[i][j], t)){//t ist Kollisionszeitpunkt mit s1.timestamp als Nullpunkt
+			if(cd(stateQs[id].back(), stateQs[i][j], t)){//t ist Kollisionszeitpunkt mit s1.timestamp als Nullpunkt
 				t += stateQs[id].back().timestamp;
+
 				if(t < tmin && (j == stateQs[i].length()-1 || t < stateQs[i][j+1].timestamp)){
+					Sphere tmp1 = stateQs[id].back();
+					tmp1.moveWithoutA(t-tmp1.timestamp);
+					Sphere tmp2 = stateQs[i][j];
+					tmp2.moveWithoutA(t-tmp2.timestamp);
+					//printf("Kollision von %d mit %d an stateQ-id %d, timestamp: %f, Abstand: %.16f\n", id, i, j, t, (tmp1.x - tmp2.x).length() - (tmp1.r + tmp2.r));
 					partner = i;
 					stateId = j;
 					tmin = t;
 					nextCol = 2;
 					break;
-				}
+				} 
 			}
 		}
 	}

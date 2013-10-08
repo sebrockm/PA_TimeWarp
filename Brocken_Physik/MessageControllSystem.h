@@ -88,14 +88,14 @@ struct Message{
 class MessageControllSystem{
 
 private:
-	Heap<Message, 20>* inputQueues;
-	Queue<Message, 20>* mailboxes;
+	Heap<Message, QL>* inputQueues;
+	Queue<Message, QL>* mailboxes;
 	u32 sphereCount;
 
 public:
-	CUDA_CALLABLE_MEMBER MessageControllSystem(Heap<Message, 20>* q, Queue<Message, 20>* mb, u32 sc):inputQueues(q), mailboxes(mb), sphereCount(sc) {}
+	CUDA_CALLABLE_MEMBER MessageControllSystem(Heap<Message, QL>* q, Queue<Message, QL>* mb, u32 sc):inputQueues(q), mailboxes(mb), sphereCount(sc) {}
 
-	CUDA_CALLABLE_MEMBER MessageControllSystem(Queue<Message, 20>* mb, u32 sc):inputQueues(0), mailboxes(mb), sphereCount(sc) {}
+	CUDA_CALLABLE_MEMBER MessageControllSystem(Queue<Message, QL>* mb, u32 sc):inputQueues(0), mailboxes(mb), sphereCount(sc) {}
 
 	CUDA_CALLABLE_MEMBER void send(const Message& msg){
 		mailboxes[msg.src].insertBack(msg);

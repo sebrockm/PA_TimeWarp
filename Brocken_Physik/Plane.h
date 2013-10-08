@@ -40,9 +40,9 @@ public:
 
 	CUDA_CALLABLE_MEMBER Plane(const Vector3f& n, f32 d, Material k):n(n.getNormalized()), d(d), k(k){}
 
-	
-	CUDA_CALLABLE_MEMBER f32 distanceTo(const Vector3f& point) const {
-		return fabs(n*point - d);
+	template <class T>
+	CUDA_CALLABLE_MEMBER T distanceTo(const Vector<T, 3>& point) const {
+		return fabs((Vector<T, 3>)n*point - (T)d);
 	}
 
 	/**
@@ -52,8 +52,9 @@ public:
 	@param point Punkt
 	@return orientierter Abstand des Punktes zur Ebene
 	*/
-	CUDA_CALLABLE_MEMBER f32 orientatedDistanceTo(const Vector3f& point) const {
-		return n*point - d;
+	template <class T>
+	CUDA_CALLABLE_MEMBER T orientatedDistanceTo(const Vector<T, 3>& point) const {
+		return (Vector<T, 3>)n*point - (T)d;
 	}
 
 	template <class T>
@@ -63,8 +64,8 @@ public:
 
 	CUDA_CALLABLE_MEMBER Matrix4f getModel2World() const {
 		const Vector3f y(0,1,0);
-		return createTranslationMatrix(d*n) * 
-			createRotationQuaternion(acos(y*n),crossProduct(y,n).getNormalized()).getMatrix4() * 
+		return createTranslationMatrix((f32)d*(Vector3f)n) * 
+			createRotationQuaternion(acos(y*(Vector3f)n),crossProduct(y,(Vector3f)n).getNormalized()).getMatrix4() * 
 			createScalarMatrix(500,0,500);
 	}
 };

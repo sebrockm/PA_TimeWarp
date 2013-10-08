@@ -24,10 +24,12 @@ typedef double	f64;
 
 #ifdef __CUDA_ARCH__
 #define INFINITY CUDART_INF_F
-#define EPSILON .000001f
+#define EPSILON .000001
+#define GAMMA .001
 #else
 const f32 INFINITY = std::numeric_limits<f32>::infinity();
-const f32 EPSILON = .000001f;
+const f64 EPSILON = .000001;
+const f64 GAMMA = .0001;
 #endif
 
 template <class T>

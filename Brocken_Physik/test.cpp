@@ -6,6 +6,8 @@
 #include "MyExceptions.h"
 
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 
 
 using namespace std;
@@ -14,6 +16,7 @@ using namespace std;
 
 int main(int argc, char** argv){
 	std::cout.precision(3);
+	srand((u32)time(0));
 	GLManager& glmgr = GLManager::instance();
 	glmgr.init(argc, argv);
 	glmgr.createShaderProgram("vs.glsl", "fs.glsl");
@@ -24,12 +27,27 @@ int main(int argc, char** argv){
 	cmgr.addPlane();
 	cmgr.planes[0].set(Vector3f(0,1,0).getNormalized(),Vector3f(), steel);
 
-	int count;
-	cin>>count;
-	cmgr.addSphere(count);
-	for(int i=0;i<cmgr.sphereCount;i++)
-		cmgr.spheres[i].set(Vector3f(0, 5+4*i, 0), 1);
-	
+	int dim;
+	cin>>dim;
+	cmgr.addSphere(dim*dim*(dim/2));
+	for(int i=0; i<dim; i++){
+		for(int j=0; j<dim; j++){
+			for(int k=0; k<dim/2; k++){
+				cmgr.spheres[i*dim*(dim/2)+j*(dim/2)+k].set(
+					Vector3f(
+						(rand()%100-50)*.005f + i - dim/3.f, 
+						(k+5), 
+						(rand()%100-50)*.005f + j - dim/3.f
+					) * 3.f, 
+					1-(rand()%100)/150.f, 
+					Material(rand()%material_N)
+				);
+			}
+		}
+	}
+	/*cmgr.addSphere(dim);
+	for(int i=0;i<dim;i++)
+		cmgr.spheres[i].set(Vector3d(0, 4+i*3, 0), 1);*/
 
 	glmgr.cam.pos = Vector3f(0,5,25);
 
