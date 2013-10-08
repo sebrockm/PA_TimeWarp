@@ -15,7 +15,7 @@ __device__ void rollback(Queue<Sphere, QL>* stateQs,
 	int id = threadIdx.x + blockIdx.x*blockDim.x;
 	MessageControllSystem mcs(mailboxes, sphereCount);
 	
-	printf("%d macht einen Rollback\n", id);
+	//printf("%d macht einen Rollback\n", id);
 
 	stateQs[id].deleteAllAfterEq(delId);// states loeschen
 
