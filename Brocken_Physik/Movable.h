@@ -10,8 +10,8 @@
 
 class Movable{
 public:
-	Vector3f x; //Schwerpunkt
-	Vector3f v; //Geschwindigkeit des Schwerpunkts
+	Vector3d x; //Schwerpunkt
+	Vector3d v; //Geschwindigkeit des Schwerpunkts
 
 	//Rotationselemente
 	Quaternionf phi; //Rotationsstatus
@@ -32,29 +32,29 @@ public:
 	:x(pos),v(),/*a(0,-9.81f,0),*/m(m),phi(1,0,0,0),omega(),k(rubber),timestamp(0),partner(-1){}
 
 	CUDA_CALLABLE_MEMBER void move(f64 dt){
-		v[1] -= (f32)9.81*dt;
+		v[1] -= 9.81*dt;
 		x += v*dt;
 
-		phi = createRotationQuaternion(omega.length()*dt, omega.getNormalized()) * phi;
+		phi = createRotationQuaternion(omega.length()*(f32)dt, omega.getNormalized()) * phi;
 	}
 
 	CUDA_CALLABLE_MEMBER void moveWithoutA(f64 dt){
 		if(false/*partner <= -2 && v.lengthSqr() < EPSILON && omega.lengthSqr() < EPSILON*/){
-			v = Vector3f();
-			omega = Vector3f();
+			v = Vector3d();
+			omega = Vector3d();
 		}
 		else{
 			x += v*dt;
 			//x[1] -= .5f*9.81f*dt*dt;
-			v[1] -= (f32)9.81*dt;
-			phi = createRotationQuaternion(omega.length()*dt, omega.getNormalized()) * phi;
+			v[1] -= 9.81*dt;
+			phi = createRotationQuaternion(omega.length()*(f32)dt, omega.getNormalized()) * phi;
 		}
 
 		timestamp += dt;
 	}
 
 	CUDA_CALLABLE_MEMBER void moveOnlyA(f64 dt){
-		v[1] -= (f32)9.81*dt;
+		v[1] -= 9.81*dt;
 	}
 
 	CUDA_CALLABLE_MEMBER bool isStill() const {

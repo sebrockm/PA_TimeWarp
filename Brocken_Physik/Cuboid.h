@@ -62,12 +62,12 @@ public:
 	CUDA_CALLABLE_MEMBER void rotate(const Quaternionf& dPhi);
 
 	CUDA_CALLABLE_MEMBER Matrix4f getModel2World() const {
-		return createTranslationMatrix(x) * phi.getMatrix4() * createScalarMatrix(la, lb, lc);
+		return createTranslationMatrix((Vector3f)x) * phi.getMatrix4() * createScalarMatrix(la, lb, lc);
 	}
 
 	CUDA_CALLABLE_MEMBER Matrix4f getWorld2Model() const {
 		return createScalarMatrix(1/la, 1/lb, 1/lc) * phi.getConjugate().getMatrix4() *
-				createTranslationMatrix(-x);
+				createTranslationMatrix(-(Vector3f)x);
 	}
 
 	CUDA_CALLABLE_MEMBER Matrix3f getInertia() const {

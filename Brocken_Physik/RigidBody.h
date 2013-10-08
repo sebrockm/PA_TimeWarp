@@ -30,13 +30,13 @@ public:
 	CUDA_CALLABLE_MEMBER void calculateProperties(vector<Particle>& particles);
 
 	CUDA_CALLABLE_MEMBER Matrix4f getModel2World() const {
-		return createTranslationMatrix(x) * phi.getMatrix4();
+		return createTranslationMatrix((Vector3f)x) * phi.getMatrix4();
 	}
 
 	CUDA_CALLABLE_MEMBER Matrix4f getm2w() const {
-		return Matrix4f(1,	0,	0,	x[0],
-						0,	1,	0,	x[1],
-						0,	0,	1,	x[2],
+		return Matrix4f(1,	0,	0,	(f32)x[0],
+						0,	1,	0,	(f32)x[1],
+						0,	0,	1,	(f32)x[2],
 						0,	0,	0,	1		) * phi.getMatrix4();
 	}
 };
