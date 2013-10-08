@@ -94,16 +94,16 @@ u32 TimeWarpManager::addPlane(int n){
 
 
 void TimeWarpManager::calculateTime(f32 dt, f32 div){
-	dt /= div;
+	f64 ddt = (f64)dt / (f64)div;
 
 	cpToStateQs<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, cuPendings, cuStateQs, sphereCount);
 	throwCudaError(cudaDeviceSynchronize());
 
-	f32 gvt = 0;
+	f64 gvt = 0;
 
-	while(gvt < dt){
+	while(gvt < ddt){
 		//initiale Kollisionen bestimmen und entsprechende Nachrichten verschicken
-		detectCollisions<<<sphereCount/BSIZE+1, BSIZE>>>(cuPlanes, planeCount, cuMailboxes, cuPendings, cuOutputQs, cuStateQs, sphereCount, dt);
+		detectCollisions<<<sphereCount/BSIZE+1, BSIZE>>>(cuPlanes, planeCount, cuMailboxes, cuPendings, cuOutputQs, cuStateQs, sphereCount, ddt);
 		throwCudaError(cudaDeviceSynchronize());
 
 		//Nachrichten in die inputQs stecken
@@ -135,7 +135,7 @@ void TimeWarpManager::calculateTime(f32 dt, f32 div){
 		//neue gvt berechnen
 		calculateLVT<<<sphereCount/BSIZE+1, BSIZE>>>(cuInputQs, cuStateQs, cuLvts, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
-		gvt = thrust::reduce(lvts, lvts+sphereCount, 1000000.f, thrust::min<f32>);
+		gvt = thrust::reduce(lvts, lvts+sphereCount, 1000000.f, thrust::min<f64>);
 		
 		//alte Sachen loeschen
 		deleteOlderThanGVT<<<sphereCount/BSIZE+1, BSIZE>>>(cuOutputQs, cuStateQs, sphereCount, gvt);

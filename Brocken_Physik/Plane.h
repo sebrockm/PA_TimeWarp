@@ -56,8 +56,9 @@ public:
 		return n*point - d;
 	}
 
-	CUDA_CALLABLE_MEMBER bool includes(const Vector3f& point) const {
-		return fEqual(n*point-d, 0.);
+	template <class T>
+	CUDA_CALLABLE_MEMBER bool includes(const Vector<T, 3>& point) const {
+		return fEqual(n*point-d, (T)0);
 	}
 
 	CUDA_CALLABLE_MEMBER Matrix4f getModel2World() const {

@@ -13,7 +13,7 @@ class TimeWarpManager{
 public:
 	Queue<Message, QL> *outputQs, *cuOutputQs;
 	Queue<Sphere, QL> *stateQs, *cuStateQs;
-	f32 *lvts, *cuLvts;
+	f64 *lvts, *cuLvts;
 	Queue<Message, QL> *mailboxes, *cuMailboxes;
 	Sphere *pendings, *cuPendings;
 	Heap<Message, QL> *inputQs, *cuInputQs;
