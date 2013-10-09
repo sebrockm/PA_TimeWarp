@@ -254,10 +254,16 @@ public:
 		Vector3f n = (s2.x-s1.x).getNormalized();
 		Plane p(n, (s1.x+s2.x)*.5);
 
+#ifdef __CUDA_ARCH__
+		int id = threadIdx.x + blockIdx.x*blockDim.x;
+#else
+		int id = -1;
+#endif
+
 		if((s2.x - s1.x).length() < s1.r + s2.r){
 			f64 tmp = (s2.x - s1.x).length() - (s1.r + s2.r);
 			s1.x += correctPosition(s1, p);
-			printf("Positionskorrektur SS, Abstand vorher: %f Abstand nachher: %f\n", tmp, (s2.x - s1.x).length() - (s1.r + s2.r));
+			printf("Positionskorrektur von id %d SS, Abstand vorher: %f Abstand nachher: %f\n", id, tmp, (s2.x - s1.x).length() - (s1.r + s2.r));
 		}
 
 		//Teile der Geschwindigkeiten, die senkrecht zur Berührebene liegen

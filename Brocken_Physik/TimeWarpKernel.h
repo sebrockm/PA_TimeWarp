@@ -33,7 +33,7 @@ __global__ void cpToStateQs(
 __global__ void cpFromStateQs(
 	Sphere* spheres,
 	Queue<Sphere, QL>* stateQs,
-	u32 sphereCount, f64 gvt);
+	u32 sphereCount);
 
 __global__ void calculateLVT(
 	Heap<Message, QL>* inputQs,
@@ -63,5 +63,9 @@ __global__ void handleNextMessages(
 	Queue<Message, QL>* mailboxes,//nur fuers Senden
 	u32 sphereCount);
 
+__global__ void accelerate(
+	Sphere* spheres,
+	u32 sphereCount,
+	f64 dt);
 
 #endif

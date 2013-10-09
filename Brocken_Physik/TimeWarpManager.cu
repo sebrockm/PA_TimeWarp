@@ -110,15 +110,24 @@ void TimeWarpManager::calculateTime(f64 dt, f64 div){
 		detectCollisions<<<sphereCount/BSIZE+1, BSIZE>>>(cuPlanes, planeCount, cuMailboxes, cuPendings, cuOutputQs, cuStateQs, sphereCount, dt);
 		throwCudaError(cudaDeviceSynchronize());
 
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
+
 		//Nachrichten in die inputQs stecken
 		receiveFromMailboxes<<<sphereCount/BSIZE+1, BSIZE>>>(cuInputQs, cuMailboxes, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
 		removeFromMailboxes<<<sphereCount/BSIZE+1, BSIZE>>>(cuMailboxes, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
 
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
+
 		//inputQs abarbeiten
 		handleNextMessages<<<sphereCount/BSIZE+1, BSIZE>>>(cuStateQs, cuInputQs, cuOutputQs, cuPendings, cuMailboxes, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
+
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
 
 		//verschickte antimesseges in die inputQs stecken
 		receiveFromMailboxes<<<sphereCount/BSIZE+1, BSIZE>>>(cuInputQs, cuMailboxes, sphereCount);
@@ -126,9 +135,15 @@ void TimeWarpManager::calculateTime(f64 dt, f64 div){
 		removeFromMailboxes<<<sphereCount/BSIZE+1, BSIZE>>>(cuMailboxes, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
 
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
+
 		//rollbacks etc durchfuehren
 		handleNextMessages<<<sphereCount/BSIZE+1, BSIZE>>>(cuStateQs, cuInputQs, cuOutputQs, cuPendings, cuMailboxes, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
+
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
 
 		//mailbox leeren
 		receiveFromMailboxes<<<sphereCount/BSIZE+1, BSIZE>>>(cuInputQs, cuMailboxes, sphereCount);
@@ -136,18 +151,34 @@ void TimeWarpManager::calculateTime(f64 dt, f64 div){
 		removeFromMailboxes<<<sphereCount/BSIZE+1, BSIZE>>>(cuMailboxes, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
 
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
+
 		//neue gvt berechnen
 		calculateLVT<<<sphereCount/BSIZE+1, BSIZE>>>(cuInputQs, cuStateQs, cuLvts, sphereCount);
 		throwCudaError(cudaDeviceSynchronize());
 		gvt = thrust::reduce(lvts, lvts+sphereCount, 1000000., thrust::min<f64>);
+
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
 		
 		//alte Sachen loeschen
 		deleteOlderThanGVT<<<sphereCount/BSIZE+1, BSIZE>>>(cuOutputQs, cuStateQs, sphereCount, gvt);
 		throwCudaError(cudaDeviceSynchronize());
 
+		if(!stateQs[0].back().r)
+			cout << "bullshit" << endl;
+
 		//cout << "max Q length: " << max_element(stateQs, stateQs+sphereCount)->length() << endl;;
 	}
+	if(gvt > dt)
+		cout << "gvt > dt" << endl;
 	
-	cpFromStateQs<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, cuStateQs, sphereCount, gvt);
+	cpFromStateQs<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, cuStateQs, sphereCount);
 	throwCudaError(cudaDeviceSynchronize());
+
+	accelerate<<<sphereCount/BSIZE+1, BSIZE>>>(cuSpheres, sphereCount, gvt);
+	throwCudaError(cudaDeviceSynchronize());
+
+	//cout << "Kugel 0 pos: ("<<spheres[0].x[0]<<", "<<spheres[0].x[1]<<", "<<spheres[0].x[2]<<")\r";
 }

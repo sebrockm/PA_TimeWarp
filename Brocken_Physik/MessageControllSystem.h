@@ -20,7 +20,7 @@ struct Message{
 	u32 src, dest;
 	Sphere newState;
 
-	CUDA_CALLABLE_MEMBER Message(){};
+	CUDA_CALLABLE_MEMBER Message():src(55555),type(mull){};
 	CUDA_CALLABLE_MEMBER Message(MsgType ty, f64 t, u32 src, u32 dest):type(ty),timestamp(t),src(src),dest(dest){}
 
 	CUDA_CALLABLE_MEMBER bool operator < (const Message& b) const {
@@ -39,8 +39,7 @@ struct Message{
 
 	CUDA_CALLABLE_MEMBER bool checkAntiPair(const Message& other) const {
 		if(timestamp == other.timestamp && src == other.src && dest == other.dest){
-			return type == event && other.type == antievent || type == antievent && other.type == event ||
-				type == eventAck && other.type == eventNack || type == eventNack && other.type == eventAck;
+			return type == event && other.type == antievent || type == antievent && other.type == event;
 		}
 		return false;
 	}
@@ -57,9 +56,10 @@ struct Message{
 		Message anti = *this;
 		switch(anti.type){
 		case event: anti.type = antievent; break;
-		case antievent: anti.type = event; break;
-		case eventAck: anti.type = eventNack; break;
-		case eventNack: anti.type = eventAck; break;
+		//case antievent: anti.type = event; break;
+		//case eventAck: anti.type = eventNack; break;
+		//case eventNack: anti.type = eventAck; break;
+		default: printf("falsche antimessage erzeugt\n");
 		}
 		return anti;
 	}
@@ -98,7 +98,10 @@ public:
 	CUDA_CALLABLE_MEMBER MessageControllSystem(Queue<Message, QL>* mb, u32 sc):inputQueues(0), mailboxes(mb), sphereCount(sc) {}
 
 	CUDA_CALLABLE_MEMBER void send(const Message& msg){
-		mailboxes[msg.src].insertBack(msg);
+		if(msg.newState.r == 0 && msg.type == Message::event)
+			printf("komische msg gesendet\n");
+		else
+			mailboxes[msg.src].insertBack(msg);
 	}
 
 #ifdef __CUDACC__
@@ -108,7 +111,8 @@ public:
 			for(u32 j = 0; j < mailboxes[i].length(); j++){
 				if(mailboxes[i][j].type != Message::mull && mailboxes[i][j].dest == id){
 					inputQueues[id].insert(mailboxes[i][j]);
-					//mailboxes[i][j].type = Message::mull;
+					if(mailboxes[i][j].newState.r == 0)
+						printf("komische msg geliefert\n");
 				}
 			}
 		}

@@ -21,6 +21,7 @@ int main(int argc, char** argv){
 	glmgr.init(argc, argv);
 	glmgr.createShaderProgram("vs.glsl", "fs.glsl");
 	
+	printf("hallo%d\n",5);
 
 	TimeWarpManager& cmgr = glmgr.cmgr;
 
@@ -35,11 +36,11 @@ int main(int argc, char** argv){
 			for(int k=0; k<dim/2; k++){
 				cmgr.spheres[i*dim*(dim/2)+j*(dim/2)+k].set(
 					Vector3f(
-						(rand()%100-50)*.005f + i - dim/3.f, 
+						(rand()%100-50)*.005f + i - dim/3.f + 10, 
 						(k+5), 
-						(rand()%100-50)*.005f + j - dim/3.f
+						(rand()%100-50)*.005f + j - dim/3.f + 10
 					) * 3.f, 
-					1-(rand()%100)/150.f, 
+					.5f/*-(rand()%100)/150.f*/, 
 					Material(rand()%material_N)
 				);
 			}

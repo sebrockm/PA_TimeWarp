@@ -118,10 +118,16 @@ public:
 
 
 	CUDA_CALLABLE_MEMBER bool operator () (const Sphere& s, const Plane& p, /*Vector3f& pt*/ f64& t) const{
+#ifdef __CUDA_ARCH__
+		int id = threadIdx.x + blockIdx.x*blockDim.x;
+#else
+		int id = -1;
+#endif
+
 		f64 vn = s.v * p.n;
 		if(fEqual(vn, 0.)){
 			if(fEqual(p.distanceTo(s.x), (f64)s.r)){
-				printf("vn == 0 && p.distanceTo(s.x) == s.r\n");
+				printf("id %d: vn == 0 && p.distanceTo(s.x) == s.r, s.v=(%f,%f,%f)\n", id, s.v[0], s.v[1], s.v[2]);
 				t = EPSILON;
 				return true;
 			}
