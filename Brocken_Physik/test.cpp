@@ -21,7 +21,6 @@ int main(int argc, char** argv){
 	glmgr.init(argc, argv);
 	glmgr.createShaderProgram("vs.glsl", "fs.glsl");
 	
-	printf("hallo%d\n",5);
 
 	TimeWarpManager& cmgr = glmgr.cmgr;
 
@@ -30,25 +29,25 @@ int main(int argc, char** argv){
 
 	int dim;
 	cin>>dim;
-	cmgr.addSphere(dim*dim*(dim/2));
-	for(int i=0; i<dim; i++){
-		for(int j=0; j<dim; j++){
-			for(int k=0; k<dim/2; k++){
-				cmgr.spheres[i*dim*(dim/2)+j*(dim/2)+k].set(
-					Vector3f(
-						(rand()%100-50)*.005f + i - dim/3.f + 10, 
-						(k+5), 
-						(rand()%100-50)*.005f + j - dim/3.f + 10
-					) * 3.f, 
-					.5f/*-(rand()%100)/150.f*/, 
-					Material(rand()%material_N)
-				);
-			}
-		}
-	}
-	/*cmgr.addSphere(dim);
+	//cmgr.addSphere(dim*dim*(dim/2));
+	//for(int i=0; i<dim; i++){
+	//	for(int j=0; j<dim; j++){
+	//		for(int k=0; k<dim/2; k++){
+	//			cmgr.spheres[i*dim*(dim/2)+j*(dim/2)+k].set(
+	//				Vector3f(
+	//					(rand()%100-50)*.005f + i - dim/3.f, 
+	//					(k+5), 
+	//					(rand()%100-50)*.005f + j - dim/3.f
+	//				) * 3.f, 
+	//				.5f /*-(rand()%100)/150.f*/, 
+	//				Material(rand()%material_N)
+	//			);
+	//		}
+	//	}
+	//}
+	cmgr.addSphere(dim);
 	for(int i=0;i<dim;i++)
-		cmgr.spheres[i].set(Vector3d(0, 4+i*3, 0), 1);*/
+		cmgr.spheres[i].set(Vector3d(0, 4+i*3, 2.2*i), 1);
 
 	glmgr.cam.pos = Vector3f(0,5,25);
 

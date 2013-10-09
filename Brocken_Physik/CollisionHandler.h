@@ -263,7 +263,9 @@ public:
 		if((s2.x - s1.x).length() < s1.r + s2.r){
 			f64 tmp = (s2.x - s1.x).length() - (s1.r + s2.r);
 			s1.x += correctPosition(s1, p);
+#ifdef DOPRINT
 			printf("Positionskorrektur von id %d SS, Abstand vorher: %f Abstand nachher: %f\n", id, tmp, (s2.x - s1.x).length() - (s1.r + s2.r));
+#endif
 		}
 
 		//Teile der Geschwindigkeiten, die senkrecht zur Berührebene liegen
@@ -310,7 +312,9 @@ public:
 		if(p.distanceTo(s.x) < s.r){
 			f64 tmp = p.distanceTo(s.x)-s.r;
 			s.x += correctPosition(s, p);
+#ifdef DOPRINT
 			printf("Positionskorrektur SP, Abstand vorher: %f Abstand nachher: %f\n", tmp, p.distanceTo(s.x)-s.r);
+#endif
 		}
 
 		//Teil der Geschwindigkeit, der senkrecht zur Ebene liegt

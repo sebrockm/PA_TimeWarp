@@ -17,16 +17,22 @@ __device__ void rollback(Queue<Sphere, QL>* stateQs,
 	
 	//printf("%d macht einen Rollback\n", id);
 	if(stateQs[id].empty()){
+#ifdef DOPRINT
 		printf("stateQ ist vor rollback leer, darf nicht sein\n");
+#endif
 	}
 	stateQs[id].deleteAllAfterEq(delId);// states loeschen
 	if(stateQs[id].empty()){
+#ifdef DOPRINT
 		printf("stateQ ist nach rollback leer durch delId==%d\n", delId);
+#endif
 	}
 
 	while(!outputQs[id].empty() && fGreaterEq(outputQs[id].back().timestamp, msg.timestamp)){ // antimessages verschicken
+#ifdef DOPRINT
 		if(outputQs[id].back().newState.r == 0 && outputQs[id].back().type == Message::event)
 			printf("hier2\n");
+#endif
 		mcs.send(outputQs[id].peekBack());
 	}
 
@@ -46,7 +52,9 @@ __device__ void rollback(Queue<Sphere, QL>* stateQs,
 			if(pendings[id].partner != -1 && pendings[id].timestamp == nmsg.timestamp && (nmsg.src == pendings[id].partner || pendings[id].partner < -1)){
 				pendings[id].partner = -1;
 			} else {
+#ifdef DOPRINT
 				printf("Fehler: Nack und pending passen nicht zusammen \n");
+#endif
 			}
 		}
 	}
@@ -99,24 +107,29 @@ __global__ void handleNextMessages(
 		{//printf("event\n");
 			int sid = stateQs[id].searchFirstBeforeEq(msg.timestamp);
 			if(sid < 0){
+#ifdef DOPRINT
 				printf("sid < 0, denn msg.timestamp == %f und stateQs[%d].back().timestamp == %f\n", msg.timestamp, id, stateQs[id].back().timestamp);
+#endif
 				return;
 			}
 			if(sid < stateQs[id].length() - 1){//rollback
 				//printf("im rollback\n");
 				rollback(stateQs, inputQs, outputQs, pendings, mailboxes, sid+1, msg, sphereCount);
 			}
-
+#ifdef DOPRINT
 			if(id==0 && msg.newState.r == 0)
 				printf("HOELLE von %d\n", msg.src);
+#endif
 				
 			stateQs[id].insertBack(msg.newState); //Zustand unmittelbar nach der Kollision
 			//if(msg.newState.partner == -2)
 			//	printf("event: stateQs[%d].insert collision plane \n", id);
 
-			if(msg.src != id){//unsere eigenen events nicht in die outputQ stecken, die kommen von Kollisionen mit Ebenen oder nicht vorhandenen Kollisionen	
+			if(msg.src != id){//unsere eigenen events nicht in die outputQ stecken, die kommen von Kollisionen mit Ebenen oder nicht vorhandenen Kollisionen
+#ifdef DOPRINT
 				if(msg.createAck().newState.r == 0 && msg.createAck().type == Message::event)
 					printf("hier1\n");
+#endif
 				mcs.send(msg.createAck());//Ack senden, damit anderer weiss, dass diese msg tatsaechlich verarbeitet wurde
 				outputQs[id].insertBack(Message(Message::antievent, msg.timestamp, id, msg.src));//antievent als output speichern, damit der andere das Einfuegen des states rueckgaengig machen kann
 			}
@@ -127,8 +140,10 @@ __global__ void handleNextMessages(
 		case Message::antievent:
 		{
 			int sid = stateQs[id].searchFirstBeforeEq(msg.timestamp) + 1;
+#ifdef DOPRINT
 			if(sid == 0)
 				printf("1 grosses kaka bei Kugel %d\n", id);
+#endif
 
 			int schleife = 0;
 			while(stateQs[id][sid].timestamp == msg.timestamp){//suche state der antimessage
@@ -146,8 +161,10 @@ __global__ void handleNextMessages(
 				sid--;
 
 			//rollback
+#ifdef DOPRINT
 			if(sid == 0)
 				printf("2 grosses kaka bei Kugel %d: sid==%d\n", id, sid);
+#endif
 			if(stateQs[id][sid].timestamp == msg.timestamp && stateQs[id][sid].partner == msg.src){
 				rollback(stateQs, inputQs, outputQs, pendings, mailboxes, sid, msg, sphereCount);
 			}
@@ -173,9 +190,11 @@ __global__ void handleNextMessages(
 				pendings[id].partner = -1;
 			}
 			else{
+#ifdef DOPRINT
 				printf("pendings[%d].timestamp == %.16f && msg.timestamp == %.16f \n", id, pendings[id].timestamp, msg.timestamp);
 				printf("pendings[%d].partner == %d && msg.src == %d \n", id, pendings[id].partner, msg.src);
 				printf("pending passt nicht oder ist nicht da (ack)\n");
+#endif
 			}
 
 			break;
@@ -186,8 +205,10 @@ __global__ void handleNextMessages(
 			if(pendings[id].partner != -1 && pendings[id].timestamp == msg.timestamp && (msg.src == pendings[id].partner || pendings[id].partner < -1)){
 				pendings[id].partner = -1;
 			}
-			else{				
+			else{
+#ifdef DOPRINT
 				printf("(nack): pendings[%d].partner == %d && msg.src == %d pendings[%d].timestamp == %.16f && msg.timestamp == %.16f \n", id, pendings[id].partner, msg.src, id, pendings[id].timestamp, msg.timestamp);
+#endif
 			}
 		}
 
@@ -225,7 +246,9 @@ __global__ void detectCollisions(
 		return;
 
 	if(pendings[id].partner != -1){
+#ifdef DOPRINT
 		printf("pending ist nicht leer bei id %d\n", id);
+#endif
 		//return;
 	}
 
@@ -283,8 +306,6 @@ __global__ void detectCollisions(
 		
 		Message msg(Message::event, pendings[id].timestamp, id, id);
 		msg.newState = pendings[id];
-		if(msg.newState.r == 0 && msg.type == Message::event)
-			printf("detc1 HOELLE von %d\n", msg.src);
 		mcs.send(msg);
 		pendings[id].partner = -1;
 	}
@@ -305,8 +326,6 @@ __global__ void detectCollisions(
 		//event an partner senden
 		Message msg(Message::event, pendings[id].timestamp, id, partner);
 		msg.newState = cp;
-		if(msg.newState.r == 0 && msg.type == Message::event)
-			printf("detc3 HOELLE von %d\n", msg.src);
 		mcs.send(msg);
 		outputQs[id].insertBack(msg.createAnti());
 	}
@@ -317,8 +336,6 @@ __global__ void detectCollisions(
 		
 		Message msg(Message::event, tmin, id, id);
 		msg.newState = pendings[id];
-		if(msg.newState.r == 0 && msg.type == Message::event)
-			printf("detc2 HOELLE von %d\n", msg.src);
 		mcs.send(msg);
 		pendings[id].partner = -1;
 	}
@@ -360,8 +377,10 @@ __global__ void deleteOlderThanGVT(
 		stateQs[id].peekFront();
 	}
 	if(stateQs[id].empty()){
+#ifdef DOPRINT
 		printf("stateQ ist leer, darf nicht sein\n");
 		return;
+#endif
 	}
 }
 
@@ -379,7 +398,9 @@ __global__ void cpToStateQs(
 	
 	if(!stateQs[id].empty())
 	{
+#ifdef DOPRINT
 		printf("stateQs[%d] ist nicht leer \n", id);
+#endif
 	}
 	pendings[id].partner = -1;
 	stateQs[id].insertBack(spheres[id]);

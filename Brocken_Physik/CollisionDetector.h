@@ -125,10 +125,12 @@ public:
 #endif
 
 		f64 vn = s.v * p.n;
-		if(fEqual(vn, 0.)){
-			if(fEqual(p.distanceTo(s.x), (f64)s.r)){
+		if(vn == 0./*fabs(vn) < GAMMA*/){
+			if(p.distanceTo(s.x) < (f64)s.r/*fabs(p.distanceTo(s.x)-(f64)s.r) < GAMMA*/){
+#ifdef DOPRINT
 				printf("id %d: vn == 0 && p.distanceTo(s.x) == s.r, s.v=(%f,%f,%f)\n", id, s.v[0], s.v[1], s.v[2]);
-				t = EPSILON;
+#endif
+				t = -EPSILON;
 				return true;
 			}
 			return false;

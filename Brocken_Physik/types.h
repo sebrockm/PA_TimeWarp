@@ -21,15 +21,15 @@ typedef signed long long	s64;
 typedef float	f32;
 typedef double	f64;
 
-
+#define DOPRINT
 #ifdef __CUDA_ARCH__
 #define INFINITY CUDART_INF_F
 #define EPSILON .000001
-#define GAMMA .00001
+#define GAMMA .001
 #else
 const f32 INFINITY = std::numeric_limits<f32>::infinity();
 const f64 EPSILON = .000001;
-const f64 GAMMA = .00001;
+const f64 GAMMA = .001;
 #endif
 
 template <class T>

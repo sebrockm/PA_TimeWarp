@@ -59,7 +59,9 @@ struct Message{
 		//case antievent: anti.type = event; break;
 		//case eventAck: anti.type = eventNack; break;
 		//case eventNack: anti.type = eventAck; break;
+#ifdef DOPRINT
 		default: printf("falsche antimessage erzeugt\n");
+#endif
 		}
 		return anti;
 	}
@@ -98,8 +100,11 @@ public:
 	CUDA_CALLABLE_MEMBER MessageControllSystem(Queue<Message, QL>* mb, u32 sc):inputQueues(0), mailboxes(mb), sphereCount(sc) {}
 
 	CUDA_CALLABLE_MEMBER void send(const Message& msg){
-		if(msg.newState.r == 0 && msg.type == Message::event)
+		if(msg.newState.r == 0 && msg.type == Message::event){
+#ifdef DOPRINT
 			printf("komische msg gesendet\n");
+#endif
+		}
 		else
 			mailboxes[msg.src].insertBack(msg);
 	}
@@ -111,8 +116,11 @@ public:
 			for(u32 j = 0; j < mailboxes[i].length(); j++){
 				if(mailboxes[i][j].type != Message::mull && mailboxes[i][j].dest == id){
 					inputQueues[id].insert(mailboxes[i][j]);
-					if(mailboxes[i][j].newState.r == 0)
+					if(mailboxes[i][j].newState.r == 0){
+#ifdef DOPRINT
 						printf("komische msg geliefert\n");
+#endif
+					}
 				}
 			}
 		}

@@ -53,13 +53,17 @@ public:
 	}
 
 	CUDA_CALLABLE_MEMBER void insertBack(const Body& b){
-		if(count >= Size) printf("q voll\n");
+#ifdef DOPRINT
+			if(count >= Size) printf("q voll\n");
+#endif
 		ar[(head+count)%Size] = b;
 		count++;
 	}
 
 	CUDA_CALLABLE_MEMBER void insertFront(const Body& b){
+#ifdef DOPRINT
 		if(count >= Size) printf("q voll\n");
+#endif
 		head = (head + Size - 1) % Size;
 		ar[head] = b;
 		count++;
