@@ -311,7 +311,7 @@ public:
 	{
 		if(p.distanceTo(s.x) < s.r){
 			f64 tmp = p.distanceTo(s.x)-s.r;
-			s.x += correctPosition(s, p);
+			//s.x += correctPosition(s, p);
 #ifdef DOPRINT
 			printf("Positionskorrektur SP, Abstand vorher: %f Abstand nachher: %f\n", tmp, p.distanceTo(s.x)-s.r);
 #endif

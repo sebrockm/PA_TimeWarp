@@ -114,7 +114,7 @@ void GLManager::handleKeyUp(u8 key, int x, int y){
 }
 
 void GLManager::handleKeyDown(u8 key, int x, int y){
-	const f32 speed = 2.f;
+	const f32 speed = 1.f;
 
 	switch(key){
 	case 'w': instance().camMovement[0] = speed; break;
@@ -129,27 +129,27 @@ void GLManager::handleKeyDown(u8 key, int x, int y){
 
 void GLManager::timerFunc(){	
 	static f64 t = 0;
-	static Array<f64, 60> fps;
-	static int i = 0;
+	//static Array<f64, 60> fps;
+	//static int i = 0;
 
 	if(!instance().pause){
 		f64 dt = instance().timer.tick();//.0167f;
 		
 		instance().cmgr.calculateTime(min(dt, 1./90), instance().div);
-		fps[i++] = 1/dt;
-		i %= fps.size();
+		//fps[i++] = 1/dt;
+		//i %= fps.size();
 
 		t += dt;
 		if(t > 1./30){
 			glutPostRedisplay();
 			t = 0;
 
-			f64 sum = 0;
+			/*f64 sum = 0;
 			for(int j=0; j<fps.size(); j++){
 				sum += fps[j];
-			}
-			instance().frames = static_cast<int>(sum/fps.size());
-			std::cout<<fixed<<(sum/fps.size())<<"FPS\t\r";
+			}*/
+			//instance().frames = static_cast<int>(sum/fps.size());
+			//std::cout<<fixed<<(sum/fps.size())<<"FPS\t\r";
 		}
 	}
 }
@@ -171,7 +171,7 @@ void GLManager::handleMouseInput(int key, int state, int x, int y){
 		s.x = instance().cam.pos+instance().cam.viewDir*2.f;
 		s.v = instance().cam.viewDir*10.f;
 		s.r = .4f;
-		s.m = 10;
+		s.m = 1000000;
 		s.k = (Material)(rand()%material_N);
 		//createSphere(s);
 	}

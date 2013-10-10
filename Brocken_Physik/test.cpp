@@ -27,6 +27,7 @@ int main(int argc, char** argv){
 	cmgr.addPlane();
 	cmgr.planes[0].set(Vector3f(0,1,0).getNormalized(),Vector3f(), steel);
 
+	cout << "wie viele?" << endl;
 	int dim;
 	cin>>dim;
 	//cmgr.addSphere(dim*dim*(dim/2));
@@ -39,7 +40,7 @@ int main(int argc, char** argv){
 	//					(k+5), 
 	//					(rand()%100-50)*.005f + j - dim/3.f
 	//				) * 3.f, 
-	//				.5f /*-(rand()%100)/150.f*/, 
+	//				1.f -0.5f/*-(rand()%100)/150.f*/, 
 	//				Material(rand()%material_N)
 	//			);
 	//		}
@@ -47,9 +48,9 @@ int main(int argc, char** argv){
 	//}
 	cmgr.addSphere(dim);
 	for(int i=0;i<dim;i++)
-		cmgr.spheres[i].set(Vector3d(0, 4+i*3, 2.2*i), 1);
+		cmgr.spheres[i].set(Vector3d(i*1.01, 4+i*3, 0), 1);
 
-	glmgr.cam.pos = Vector3f(0,5,25);
+	glmgr.cam.pos = Vector3f(0,5,100);
 
 	try{
 		glmgr.enterMainLoop();

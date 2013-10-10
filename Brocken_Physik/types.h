@@ -21,7 +21,7 @@ typedef signed long long	s64;
 typedef float	f32;
 typedef double	f64;
 
-#define DOPRINT
+//#define DOPRINT
 #ifdef __CUDA_ARCH__
 #define INFINITY CUDART_INF_F
 #define EPSILON .000001

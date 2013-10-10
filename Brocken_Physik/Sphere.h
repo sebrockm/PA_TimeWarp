@@ -26,6 +26,13 @@ public:
 	CUDA_CALLABLE_MEMBER Matrix4f getModel2World() const {
 		return createTranslationMatrix((Vector3f)x) * phi.getMatrix4() * createScalarMatrix((f32)r,(f32)r,(f32)r);
 	}
+
+	CUDA_CALLABLE_MEMBER void moveWithoutA(f64 dt){
+		Movable::moveWithoutA(dt);
+
+		//der ultimative Hack:
+		x[1] = max((f64)r + EPSILON, x[1]);
+	}
 };
 
 
