@@ -44,3 +44,4 @@ ipch/*
 *.synctex
 *.toc
 *LatexianTemp_*.*tex
+*.pdf
