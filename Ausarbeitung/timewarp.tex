@@ -1,0 +1,63 @@
+\documentclass{scrreprt}
+
+\usepackage[ngerman]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath, amsthm, amssymb, amscd, amsfonts, amsxtra}
+\usepackage{graphicx}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\vspace{10mm}
+\begin{center}
+\includegraphics[height=20mm]{unilogo.eps}
+\vfill
+\rule{\textwidth}{0.1mm}\vspace{5mm}
+\Huge\textbf{Parallele kontinuierliche Kollisionserkennung}
+\vspace{1mm}\rule{\textwidth}{0.1mm}
+\vfill
+\Large
+Ausarbeitung\\
+Sebastian Brockmeyer und Dominik Krümpelmann
+\vfill
+\normalsize
+Ausarbeitung  im Fachbereich Mathematik/Informatik an der Universität Osnabrück \\
+Vorlesung: Parallele Algorithmen bei Henning Wenke
+
+Osnabrück, den \today
+\end{center}
+\end{titlepage}
+
+\newpage
+\mbox{}
+\thispagestyle{empty}
+\pagenumbering{Roman}
+\chapter*{Einleitung}
+\addcontentsline{toc}{chapter}{Einleitung}
+\setcounter{page}{1}
+
+\newpage
+\mbox{}
+\thispagestyle{empty}
+\newpage
+\clearpage
+\setcounter{page}{2}
+\tableofcontents
+\listoffigures
+\newpage
+
+
+%% Beginn des Allgemeinen Teils
+\pagenumbering{arabic}
+
+\chapter{Einführung}
+\section{Grundlagen}
+\section{Timwarp Algorithmus}
+\chapter{Implementations Details}
+\section{Paralelliseirung}
+\section{Umsetzung}
+\chapter{Fazit}
+\end{document}

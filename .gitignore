@@ -37,3 +37,10 @@ lib/*
 lib64/*
 ipch/*
 *.exe
+
+#Latex
+*.aux
+*.lof
+*.synctex
+*.toc
+*LatexianTemp_*.*tex
