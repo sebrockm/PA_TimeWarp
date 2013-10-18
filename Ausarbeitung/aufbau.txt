@@ -1,0 +1,37 @@
+Aufbau:
+
+1. Titelseite
+2. Einleitung (Beide) (1 Seite)
+3. Inhaltsverzeichnis
+4. Abbildungsverzeichnis
+5. Grundlagen (4 Seiten)
+    * Einleitung (Fließtext)
+    * Kollisionserkennung (Zeitberechnung, Formel)
+        ** Ebene - Kugel
+        ** Kugel - Kugel
+    * Timewarp Algorithmus
+        ** Rollback
+        ** Nachrichtensystem
+        ** Kollisionserkennung
+        ** Varianten (Hinweis auf Multi Body etc.)
+        ** LVT/GVT
+6. Timwarp Algorithmus auf der GPU(Grafikkarte) (4 Seiten)
+    * Einleitung (Fließtext)
+    * Probleme
+    ** Nachrichten (Art und Weise des Verschickens)
+    *** Aufbau einer Nachricht
+    ** Datenstruckturen
+    * Kernelaufbau
+    ** Kernel
+    *** Funktionalität
+    *** Zusammenhang
+    ** Diagramm
+    *** kurze Erklärung
+7. Fazit (Beide) (1 Seite)
+    * Kernellaufzeit (Vergleich mit Bachelorarbeit von S.B.)
+    * Ablauf
+    * etc.
+8. Literaturliste
+    * Jefferson Time Warp Algorithmus
+    * etc.
+
