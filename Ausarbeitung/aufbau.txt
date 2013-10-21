@@ -18,15 +18,15 @@ Aufbau:
 6. Timwarp Algorithmus auf der GPU(Grafikkarte) (4 Seiten) (Sebastian)
     * Einleitung (Fließtext)
     * Probleme
-    ** Nachrichten (Art und Weise des Verschickens)
-    *** Aufbau einer Nachricht
-    ** Datenstruckturen
-    * Kernelaufbau
-    ** Kernel
-    *** Funktionalität
-    *** Zusammenhang
-    ** Diagramm
-    *** kurze Erklärung
+		** Nachrichten (Art und Weise des Verschickens)
+			*** Aufbau einer Nachricht
+		** Datenstruckturen
+	* Kernelaufbau
+		** Kernel
+			*** Funktionalität
+			*** Zusammenhang
+		** Diagramm
+			*** kurze Erklärung
 7. Fazit (Beide) (1 Seite)
     * Kernellaufzeit (Vergleich mit Bachelorarbeit von S.B.)
     * Ablauf
