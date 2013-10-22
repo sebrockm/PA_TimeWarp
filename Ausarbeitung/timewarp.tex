@@ -6,6 +6,7 @@
 \usepackage{lmodern}
 \usepackage{amsmath, amsthm, amssymb, amscd, amsfonts, amsxtra}
 \usepackage{graphicx}
+\usepackage{epstopdf}
 
 \begin{document}
 
@@ -54,11 +55,57 @@ Osnabrück, den \today
 \pagenumbering{arabic}
 
 \chapter{Einführung}
-test
 \section{Grundlagen}
-\section{Timwarp Algorithmus}
-\chapter{Implementations Details}
-\section{Paralelliseirung}
-\section{Umsetzung}
+\section{Timewarp Algorithmus}
+\label{sec:TimewarpAlgoritmus}
+
+
+
+
+\chapter{Timewarp Algorithmus auf der GPU}
+Der in Abschnitt \ref{sec:TimewarpAlgoritmus} vorgestellte Timewarp Algorithmus kann theoretisch von beliebig vielen Threads
+parallel ausgef"uhrt werden. Jeder Thread berechnet dabei den zeitlichen Verlauf eines Objektes, indem er Events erkennt
+und neue States erzeugt, anderen Threads Nachrichten schickt und seinerseits Nachrichten von anderen Threads empf"angt
+und darauf reagiert. 
+
+In diesem Kapitel wird vorgestellt, wie der Timewarp Algorithmus auf der GPU mittels CUDA implementiert wurde. Dabei wird
+insbesondere auf Probleme eingegangen, die im Zuge der Implementierung aufgetreten sind, wie etwa die Umsetzung des
+Nachrichtensystems oder die Implementierung geeigneter Datenstrukturen, die ohne dynamisch allokierten Speicher
+auskommen. Denn es ist in CUDA zwar m"oglich, innerhalb eines Kernels Speicher dynamisch zu allokieren \cite{...}, aus
+Gr"unden der Effizienz sollte darauf aber so weit wie m"oglich verzichtet werden.
+
+Abschlie\ss end wird die im Rahmen des Praktikums entstandene Version des Timewarp Algorithmus vollst"andig illustriert
+und erl"autert.
+
+\section{Datenstrukturen}
+\subsection{Dequeue}
+Im Timewarp Algorithmus ist es erforderlich, dass die Threads States erzeugen, die die Zust"ande des ihnen zugewiesenen
+Objektes repr"asentieren, und diese mit Zeitspempeln versehen zwischenspeichern, um ggf. einen Rollback zu einem
+fr"uheren Zustand durchf"uhren zu k"onnen. Aus dem gleichen Grund m"ussen auch alle verschickten Nachrichten gespeichert
+werden, um bei einem Rollback zugeh"orige Antimessages (vgl. \ref{...}) verschicken zu k"onnen.
+Gespeicherte Zust"ande und Nachrichten, deren Zeitspempel "alter als die GVT sind, k"onnen dabei bedenkenlos gel"oscht
+werden, da es keinen Rollback bis hinter die GVT geben kann.
+
+Eine Datenstruktur, die diesen Anforderungen gerecht wird, ist eine Double-Ended-Queue, oder kurz "Dequeue". Diese wurde
+nach dem Vorbild der \emph{ArraySchlange} aus der Vorlesung ''Informatik A'' \cite{...} an der Uni Osnabr"ueck
+implementiert. Ihr Vorteil ist, dass sie auf einem Array fester Gr"o\ss e operiert und keinen dynamisch allokierten
+Speicher ben"otigt. Dieser Vorteil ist allerdings zugleich auch ein Nachteil, da Queue sich bei Bedarf nicht ohne
+Weiters vergr"o\ss ern kann. Es sei an dieser Stelle allerdings schon darauf hingewiesen, dass keine der eingesetzten
+Dequeues in den Szenarien jemals eine Gr"o\ss e von f"unf "uberschritten hat, sodass eine feste Gr"o\ss e von 20
+gew"ahlt wurde, um einerseits allen Eventualit"aten entgegenzukommen und andererseits nicht zu viel Speicher zu belegen.
+
+\subsection{Heap}
+Da ein Thread mehrere Nachrichten auf einmal bekommen kann, die er dann nach Zeitspempeln sortiert abarbeiten muss,
+ben"otigt es auch hierf"ur eine geeignete Datenstruktur. Die Wahl fiehl hier auf einen Heap (vgl. \cite{...}), da der
+Zugriff auf das kleinste Element in konstanter Zeit und ein Einf"uge- und L"oschvorgang in logarithmischer Zeit erfolgt.
+Au\ss erdem kann er wie die Dequeue auf einem Array konstanter Gr"o\ss e arbeiten.
+Die Tatsache, dass ein Heap immer nur ausschlie\ss lich den Zugriff und das L"oschen des kleinsten Elements erlaubt, ist
+hier kein Nachteil, da jeder Thread immer nur eine eingehende Nachricht auf einmal bearbeitet und auch niemals Zugriff auf eine
+andere als die mit dem kleinsten Zeitspempel ben"otigt.
+
+\section{Das Nachrichtensystem}
+\subsection{Nachrichten}
+
+
 \chapter{Fazit}
 \end{document}
