@@ -45,3 +45,4 @@ ipch/*
 *.toc
 *LatexianTemp_*.*tex
 *.pdf
+*.fdb_latexmk
