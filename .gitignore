@@ -46,3 +46,4 @@ ipch/*
 *LatexianTemp_*.*tex
 *.pdf
 *.fdb_latexmk
+*.fls
