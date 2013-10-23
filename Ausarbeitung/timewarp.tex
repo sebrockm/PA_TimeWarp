@@ -125,10 +125,10 @@ und erl"autert.
 \section{Datenstrukturen}
 \subsection{Dequeue}
 Im Timewarp Algorithmus ist es erforderlich, dass die Threads States erzeugen, die die Zust"ande des ihnen zugewiesenen
-Objektes repr"asentieren, und diese mit Zeitspempeln versehen zwischenspeichern, um ggf. einen Rollback zu einem
+Objektes repr"asentieren, und diese mit Zeitstempeln versehen zwischenspeichern, um ggf. einen Rollback zu einem
 fr"uheren Zustand durchf"uhren zu k"onnen. Aus dem gleichen Grund m"ussen auch alle verschickten Nachrichten gespeichert
 werden, um bei einem Rollback zugeh"orige Antimessages (vgl. \ref{...}) verschicken zu k"onnen.
-Gespeicherte Zust"ande und Nachrichten, deren Zeitspempel "alter als die GVT sind, k"onnen dabei bedenkenlos gel"oscht
+Gespeicherte Zust"ande und Nachrichten, deren Zeitstempel "alter als die GVT sind, k"onnen dabei bedenkenlos gel"oscht
 werden, da es keinen Rollback bis hinter die GVT geben kann.
 
 Eine Datenstruktur, die diesen Anforderungen gerecht wird, ist eine Double-Ended-Queue, oder kurz "Dequeue". Diese wurde
@@ -140,17 +140,62 @@ Dequeues in den Szenarien jemals eine Gr"o\ss e von f"unf "uberschritten hat, so
 gew"ahlt wurde, um einerseits allen Eventualit"aten entgegenzukommen und andererseits nicht zu viel Speicher zu belegen.
 
 \subsection{Heap}
-Da ein Thread mehrere Nachrichten auf einmal bekommen kann, die er dann nach Zeitspempeln sortiert abarbeiten muss,
+Da ein Thread mehrere Nachrichten auf einmal bekommen kann, die er dann nach Zeitstempeln sortiert abarbeiten muss,
 ben"otigt es auch hierf"ur eine geeignete Datenstruktur. Die Wahl fiehl hier auf einen Heap (vgl. \cite{...}), da der
 Zugriff auf das kleinste Element in konstanter Zeit und ein Einf"uge- und L"oschvorgang in logarithmischer Zeit erfolgt.
 Au\ss erdem kann er wie die Dequeue auf einem Array konstanter Gr"o\ss e arbeiten.
 Die Tatsache, dass ein Heap immer nur ausschlie\ss lich den Zugriff und das L"oschen des kleinsten Elements erlaubt, ist
 hier kein Nachteil, da jeder Thread immer nur eine eingehende Nachricht auf einmal bearbeitet und auch niemals Zugriff auf eine
-andere als die mit dem kleinsten Zeitspempel ben"otigt.
+andere als die mit dem kleinsten Zeitstempel ben"otigt.
 
-\section{Das Nachrichtensystem}
-\subsection{Nachrichten}
+\section{Nachrichten}
+Nachrichten spielen eine zentrale Rolle im Timewarp Algorithmus. In der hier implementierten Variante gibt es vier
+unterschiedliche Nachrichtentypen, die aber den gleichen Aufbau haben.
+\subsection{Aufbau einer Nachricht}
+Eine Nachricht setzt sich aus folgenden Komponenten zusammen: Typ, Zeitstempel, Empf"anger-ID, Absender-ID und neuer
+Zustand.
 
+Dabei gibt es die folgenden vier verschiedenen Nachrichtentypen:
+Events, Antievents, Event-Acknowledgements (ACK) und Event-Negative-Acknowledgements (NACK).
+
+Die IDs von Empf"anger und Absender beziehen sich dabei jeweils direkt auf die globale ID des jeweiligen Threads. Der
+neue Zustand wird nur ben"otigt, wenn es sich um eine Nachricht vom Typ Event handelt. Es handelt sich dabei de facto um
+ein vollst"andiges Objekt mit Angaben "uber Position, Geschwindigkeit, Rotationsgeschwindigkeit und Rotationsstatus. Um
+Nachrichten einheitlich verarbeiten zu k"onnen, enthalten auch die anderen Nachrichtentypen das Datenfeld des neuen
+Zustands, wenngleich dieser dort g"anzlich ignoriert wird.
+
+\subsection{Events}
+Events werden immer dann verschickt, wenn ein Thread einen neuen Zustand seines Objektes erzeugt. Ist der Grund f"uer den
+neuen Zustand eine Kollision mit einem anderen Objekt, wird ein Event an den Kollisionspartner geschickt mit dessen
+neuen Zustand, um ihn "uber
+die Kollision zu benachrichtigen. Wird dagegen eine Kollision mit einer Ebene erkannt oder findet in dem betrachteten
+Zeitintervall (also zwischen zwei Rendervorg"angen) keine Kollision mehr statt, wird ebenfalls ein neuer Zustand
+erzeugt, den der Thread mit einem Event an sich selbst verschickt. Dieses Vorgehen mag zun"achst umst"andlich erscheinen. Es ist aber
+durchaus sinnvoll, da immer damit zu rechnen ist, auch noch Nachrichten mit einem kleineren Zeitstempel von anderen
+Threads zu erhalten, die dann einen unn"otigen Rollback ausl"osen w"urden, sollte der neue Zustand zu voreilig akzeptiert
+werden. Daher wird der eigene neue Zustand erst dann in die State-Queue eingef"ugt, wenn der Empf"anger mit einem ACK
+geantwortet hat.
+
+\subsection{Antievents}
+Antievents bilden das Gegenst"uck zu Events. Sie sind zentraler Bestandteil des Rollback-Mechanismus. Empf"angt ein
+Thread ein Event oder Antievent, dessen Zeitstempel kleiner ist als der des aktuellen Zustands, muss ein Rollback eingeleitet
+werden. Das bedeutet einerseits, dass alle Zust"ande mit einem gr"o\ss eren Zeitstempel wieder aus der State-Queue gel"oscht werden m"ussen, und
+andererseits, dass alle verschickten Events mit einem gr"o\ss eren Zeitstempel f"ur ung"ultig erkl"art werden m"ussen.
+Die Empf"anger dieser Events werden daher mit
+zugeh"origen Antievents "uber diese Situation informiert, sodass sie dann ihrerseits einen Rollback einleiten k"onnen.
+
+\subsection{Event-Acknowledgement}
+Ein ACK ist die Antwort auf ein Event. Ein Thread, der ein Event empfangen hat und den darin enthaltenen Zustand in
+seine State-Queue einf"ugt, muss daraufhin ein ACK an der Absender des Events schicken. Dieser kann daraufhin
+ebenfalls den neuen Zustand in seine State-Queue einf"ugen.
+
+\subsection{Event-Negative-Acknowledgement}
+Ein NACK wird verschickt, wenn der Empf"anger eines Events dieses verwirft. Das kann w"ahrend eines Rollbacks geschehen,
+da dort die gesamte Input-Queue gel"oscht wird. Der Absender des Events muss dann beim Empfang des zugeh"origen NACKs
+ebenfalls den erzeugten Zustand, der noch nicht in seine State-Queue eingef"ugt wurde, verwerfen.
+
+
+\section{Kernelaufbau}
 
 \chapter{Fazit}
 \begin{thebibliography}{10}

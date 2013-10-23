@@ -46,5 +46,8 @@ ipch/*
 *LatexianTemp_*.*tex
 *.pdf
 *.fdb_latexmk
+
+
+*.swp
 *.fls
 .DS_Store
