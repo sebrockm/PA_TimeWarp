@@ -49,3 +49,5 @@ ipch/*
 
 
 *.swp
+*.fls
+.DS_Store
