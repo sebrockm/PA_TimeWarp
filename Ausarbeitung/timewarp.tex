@@ -1,4 +1,4 @@
-\documentclass{scrreprt}
+\documentclass[a4paper, 10pt, openright, parskip, chapterprefix]{scrreprt}
 
 \usepackage[ngerman]{babel}
 \usepackage[utf8]{inputenc}
@@ -54,10 +54,55 @@ Osnabrück, den \today
 %% Beginn des Allgemeinen Teils
 \pagenumbering{arabic}
 
-\chapter{Einführung}
-\section{Grundlagen}
-\section{Timewarp Algorithmus}
+\chapter{Grundlagen}
+In diesem Kapitel werden wir uns mit den Timewarp Algoirthmus von~\cite{timewarp} beschäftigen und
+Formeln für die Berechnung des exakten Zeitpunkts $t$ der Kollisionen herleiten, die von einem 
+Objekttyp abhängig sind.
+\section{Kollisionserkennung}
+
+Für den Timewarp Algorithmus benötigen wir später den exakten Zeitpunkt einer Kollision. Da wir uns
+auf den Objekttypen Kugel und Ebene beschränkten, reicht es für 2 mögliche Arten von Kollisionen 
+(Kugel - Kugel und Kugel - Ebene) eine Formel herzuleiten.\\
+
+\noindent Zunächst konzentrieren wir uns auf die Kugel - Kugel Kollision. Dafür benötigen wir die 2 Kugeln 
+$s_1$ und $s_2$ zum gleichen Zeitpunkt, mit den Radien $s_1.r$ und $s_2.r$, den Geschwindigkeitsvektoren
+$s_1.v$ und $s_2.v$ und die Positionen $s_1.p$ und $s_2.p$. Wir verwenden für die Abstandsberechnung die
+Eulidnorm, da die Objekte sich im $\mathbb{R}^{3}$ befinden. Eine Kugel kollidiert mit einer anderen
+Kugel, wenn 
+\begin{equation}
+    \label{eq:KugelKugelBed}
+    \|s_1.p + s_1.v \cdot t - s_2.p - s_2.v \cdot t \|_{2} = s_1.r + s_2.r
+\end{equation}
+gilt, da der Abstand immer vom Ursprung der Kugel ausgeht.
+Die Bedingung~\ref{eq:KugelKugelBed} können wir nun weiter vereinfachen, indem wir mit der Multilinearität des Skalarprodukts folgende Formel erhalten
+\begin{align*}
+(\ref{eq:KugelKugelBed})  &\Leftrightarrow \|\underbrace{s_1.p - s_2.p}_{=: s_{12}.p} + t (\underbrace{s_1.v - s_2.v}_{:=s_{12}v})\|_{2}  = s_1.r + s_2.r\\
+&\Leftrightarrow \langle s_{12}.p + t \cdot s_{12}.v, s_{12}.p + t \cdot s_{12}.v\rangle = (s_1.r + s_2.r)^{2}\\
+&\Leftrightarrow t^{2} \cdot \langle s_{12}.v, s_{12}.v\rangle + 2t \cdot \langle s_{12}.p, s_{12}.v\rangle + \langle s_{12}.p, s_{12}.p\rangle -(s_1.r+s_2.r)^{2} = 0 \text{.}
+\end{align*}
+
+\noindent Nun betrachten wir alle möglichen Fällte um $t$ exakt zu bestimmen. Zuerst betrachten wir den Fall $\langle s_{12}.v, s_{12}.v \rangle = 0$ und 
+$\langle s_{12}.p, s_{12}.v \rangle = 0$. In diesem Fall können wir keine Zeitpunkt $t$ bestimmen, da alle $t$-Therme wegfallen. Wenn
+$\langle s_{12}.v, s_{12}.v \rangle = 0$ und $\langle s_{12}.p, s_{12}.v\rangle \not= 0$, dann gilt
+\begin{align*}
+&2t \langle s_{12}.p, s_{12}.v\rangle + \langle s_{12}.p, s_{12}.p \rangle - (s_{1}.r + s_{2}.r)^{2} = 0 \\
+\Leftrightarrow \; &t  = \frac{(s_{1}.r + s_{2}.r)^{2} - \langle s_{12}.p, s_{12}.p \rangle}{2 \langle s_{12}.p, s_{12}.p\rangle}\text{.}
+\end{align*}
+
+\noindent  Für den Fall, das $\langle s_{12}.v, s_{12}.v \rangle \not= 0$ können wir die PQ-Formel anwenden und erhalten
+\begin{equation*}
+t_{1, 2} = -\frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \pm \sqrt{ \left( \frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \right)^{2} + \frac{(s_{1}.r + s_{2}.r)^{2} + \langle s_{12}.p, s_{12}.p\rangle}{\langle s_{12}.v, s_{12}.v \rangle}}\text{.}
+\end{equation*}
+
+\noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei es bei mehreren Lösungen den nächsten Zeitpunkt gewählt wird und Zeitpunkte in der Vergangenheit werden missachtet. etzt bestimmen wir die Formel für die Ebene-Kugel Kollision.
+\section{Timwarp Algorithmus}
 \label{sec:TimewarpAlgoritmus}
+    % * Timewarp Algorithmus
+    %     ** Rollback
+    %     ** Nachrichtensystem
+    %     ** Kollisionserkennung
+    %     ** Varianten (Hinweis auf Multi Body etc.)
+    %     ** LVT/GVT
 
 
 
@@ -108,4 +153,14 @@ andere als die mit dem kleinsten Zeitspempel ben"otigt.
 
 
 \chapter{Fazit}
+\begin{thebibliography}{10}
+\bibitem{timewarp}
+Brian Mirtich. Timewarp Rigid Body Simulation. MERL - A MITSUBISHI ELECTRIC RESEARCH LABORATORY
+
+\bibitem{timewarp-cpu}
+John Koenig. Object-Centric Parallel Rigid Body Simulation With Timewarp. University of Minnesota
+\end{thebibliography}
 \end{document}
+
+
+
