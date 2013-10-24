@@ -58,7 +58,7 @@ Aufbau:
                 *** antimessages speichern
                 *** messages verschicken (EVENTS)
             ** receiveFromMailboxes
-            ** removeFromMailboxes
+            ** clearMailboxes
                 *** Aufräumen
             ** handleNextMessages
                 *** Bearbeitung aller neuen Nachrichten
