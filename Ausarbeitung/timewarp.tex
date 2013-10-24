@@ -57,55 +57,83 @@ Osnabrück, den \today
 \pagenumbering{arabic}
 
 \chapter{Grundlagen}
-In diesem Kapitel werden wir uns mit den Timewarp Algoirthmus von~\cite{timewarp} beschäftigen und
+In diesem Kapitel werden wir uns mit dem Timewarp Algoirthmus von~\cite{timewarp} beschäftigen und
 Formeln für die Berechnung des exakten Zeitpunkts $t$ der Kollisionen herleiten, die von einem 
 Objekttyp abhängig sind.
-\section{Kollisionserkennung}
 
-Für den Timewarp Algorithmus benötigen wir später den exakten Zeitpunkt einer Kollision. Da wir uns
-auf den Objekttypen Kugel und Ebene beschränkten, reicht es für 2 mögliche Arten von Kollisionen 
+\section{Kollisionserkennung}
+Die Berechnung des exakten Zeitpunktes benötigen wir, um eine exakte Kollisionserkennung zu garantieren. Das heißt die Kollisionen werden vor dem eigentlichen Kollisionszeitpunkt erkannt. Dadurch erhalten wir eine kontinuierliche Kollisionserkennung und vermeiden eine diskrete Kollisionserkennung (siehe Abbildung~\ref{abb:kollkondis}).
+
+\begin{figure}[h!]
+\centering\begin{tikzpicture}
+\draw[blue] (-4,0) circle (12pt);
+\draw[red] (-3 -1/7 ,0) circle (12pt);
+\filldraw[draw=black,color=blue] (-4,-0) circle (12pt);
+\filldraw[draw=black,color=red] (-3 -1/7,0) circle (12pt);
+\draw (-3.6, -1) node{kontinuierlich};
+\draw (2.3, -1) node{diskret};
+\draw[green] (2,0) circle (12pt);
+\draw[black] (3-1/2,0) circle (12pt);
+\filldraw[draw=black,color=green] (2,0) circle (12pt);
+\filldraw[draw=black,color=black] (3-1/2,0) circle (12pt);
+\end{tikzpicture}
+\caption{Kollisionserkennungsarten}
+\label{abb:kollkondis}
+\end{figure}
+
+Da wir uns auf den Objekttypen Kugel und Ebene beschränkten, reicht es für 2 mögliche Arten von Kollisionen 
 (Kugel - Kugel und Kugel - Ebene) eine Formel herzuleiten.\\
 
 \subsection{Kugel - Kugel Kollision}
 \noindent Zunächst konzentrieren wir uns auf die Kugel - Kugel Kollision. Dafür benötigen wir die 2 Kugeln 
-$s_1$ und $s_2$ zum gleichen Zeitpunkt, mit den Radien $s_1.r$ und $s_2.r$, den Geschwindigkeitsvektoren
+$s_1$ und $s_2$ zu einem gleichen Zeitpunkt, mit den Radien $s_1.r$ und $s_2.r$, den Geschwindigkeitsvektoren
 $s_1.v$ und $s_2.v$ und die Positionen $s_1.p$ und $s_2.p$. Wir verwenden für die Abstandsberechnung die
-Eulidnorm, da die Objekte sich im $\mathbb{R}^{3}$ befinden. Eine Kugel kollidiert mit einer anderen
+Euklidnorm, da die Objekte sich im $\mathbb{R}^{3}$ befinden. Eine Kugel kollidiert mit einer anderen
 Kugel, wenn 
 \begin{equation}
     \label{eq:KugelKugelBed}
     \|s_1.p + s_1.v \cdot t - s_2.p - s_2.v \cdot t \|_{2} = s_1.r + s_2.r
 \end{equation}
-gilt, da der Abstand immer vom Ursprung der Kugel ausgeht.
-Die Bedingung~\ref{eq:KugelKugelBed} können wir nun weiter vereinfachen, indem wir mit der Multilinearität des Skalarprodukts folgende Formel erhalten
+gilt, da der Abstand immer vom Zentrum der Kugel gemessen wird.
+Die Bedingung~\ref{eq:KugelKugelBed} können wir nun weiter vereinfachen, indem wir mit der Multilinearität des Skalarprodukts verwenden. Damit erhalten wir die Formel 
 \begin{align*}
 (\ref{eq:KugelKugelBed})  &\Leftrightarrow \|\underbrace{s_1.p - s_2.p}_{=: s_{12}.p} + t (\underbrace{s_1.v - s_2.v}_{:=s_{12}v})\|_{2}  = s_1.r + s_2.r\\
 &\Leftrightarrow \langle s_{12}.p + t \cdot s_{12}.v, s_{12}.p + t \cdot s_{12}.v\rangle = (s_1.r + s_2.r)^{2}\\
 &\Leftrightarrow t^{2} \cdot \langle s_{12}.v, s_{12}.v\rangle + 2t \cdot \langle s_{12}.p, s_{12}.v\rangle + \langle s_{12}.p, s_{12}.p\rangle -(s_1.r+s_2.r)^{2} = 0 \text{.}
 \end{align*}
 
-\noindent Nun betrachten wir alle möglichen Fällte um $t$ exakt zu bestimmen. Zuerst betrachten wir den Fall $\langle s_{12}.v, s_{12}.v \rangle = 0$ und 
-$\langle s_{12}.p, s_{12}.v \rangle = 0$. In diesem Fall können wir keine Zeitpunkt $t$ bestimmen, da alle $t$-Therme wegfallen. Wenn
+\noindent Nun betrachten wir alle möglichen Fälle um $t$ exakt zu bestimmen. Zuerst betrachten wir den Fall $\langle s_{12}.v, s_{12}.v \rangle = 0$ und $\langle s_{12}.p, s_{12}.v \rangle = 0$. In diesem Fall können wir keinen Zeitpunkt $t$ bestimmen, da alle $t$-Therme wegfallen. Wenn
 $\langle s_{12}.v, s_{12}.v \rangle = 0$ und $\langle s_{12}.p, s_{12}.v\rangle \not= 0$, dann gilt
 \begin{align*}
 &2t \langle s_{12}.p, s_{12}.v\rangle + \langle s_{12}.p, s_{12}.p \rangle - (s_{1}.r + s_{2}.r)^{2} = 0 \\
 \Leftrightarrow \; &t  = \frac{(s_{1}.r + s_{2}.r)^{2} - \langle s_{12}.p, s_{12}.p \rangle}{2 \langle s_{12}.p, s_{12}.p\rangle}\text{.}
 \end{align*}
 
-\noindent  Für den Fall, das $\langle s_{12}.v, s_{12}.v \rangle \not= 0$ können wir die PQ-Formel anwenden und erhalten
+\noindent  Für den Fall, das $\langle s_{12}.v, s_{12}.v \rangle \not= 0$ ist, können wir die PQ-Formel anwenden und erhalten
 \begin{equation*}
 t_{1, 2} = -\frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \pm \sqrt{ \left( \frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \right)^{2} + \frac{(s_{1}.r + s_{2}.r)^{2} + \langle s_{12}.p, s_{12}.p\rangle}{\langle s_{12}.v, s_{12}.v \rangle}}\text{.}
 \end{equation*}
 
-\noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei es bei mehreren Lösungen den nächsten Zeitpunkt gewählt wird und Zeitpunkte in der Vergangenheit werden missachtet. 
+\noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei es bei mehreren Lösungen der älteste Zeitpunkt gewählt wird. Natürlich werden Zeitpunkte, die in der Vergangenheit liegen, missachtet. 
 
 \subsection{Kugel - Ebene Kollision}
-Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision.
+Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision. Dafür benötigen wir eine Ebene $e$ und eine Kugel $s$.  Da für die Ebene die Hessenormalform verwendet, reicht es folgende Bedingung 
+\begin{equation}
+	\langle s.x, e.n \rangle - e.d = s.r
+	\label{eq:bedEbeneKugel}
+\end{equation}
+nach $t$ umzuformen. Für die Umformung nach $t$ verwenden wir wieder die Multilinearität. Damit ergibt sich
+\begin{align*}
+(\ref{eq:bedEbeneKugel}) &\Leftrightarrow \langle s.p, e.n \rangle + \langle s.v \cdot t, e.n \rangle - e.d = s.r \\
+&\Leftrightarrow \langle s.p, e.n \rangle + t \cdot \langle s.v, e.n\rangle - e.d = s.r\\
+&\Leftrightarrow t = \frac{s.r + e.d - \langle s.p, e.n \rangle}{ \langle s.v, s.n \rangle}\text{.}
+\end{align*}
 \section{Timwarp Algorithmus}
 \label{sec:TimewarpAlgoritmus}
-Als Grundlage verwenden wir die Timewarp Ridgid Body Simulation von~\cite{timewarp}, wobei diese Version  den Allgemeinen Timewarp Algorithmus von Jefferson~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für eine parlelle diskrete Event Simulation. Wir beschränkten uns auf die Kollisionserkennung. Diese Kollisionserkennung kann nicht naiv implementiert werden, da es passieren kann, das erkannte Kollisionen sich gegenseitig aufheben (siehe Abbildung~\ref{abb:kollision}).
 
-\begin{figure}[t]
+In diesem Abschnitt werden wir eine mögliche Strategie für die Kollisionserkennung vorstellen. Natürlich  stellt sich die Frage, warum wir nicht ein naiven Ansatz für Kollisionserkennung verwenden. Das Problem ist, dass mit einem naiven Ansatz die Situation von Abbildung~\ref{abb:kollision} eintreten kann.
+
+\begin{figure}[h!]
 \centering\begin{tikzpicture}
 \draw[blue] (-4,0) circle (12pt);
 \draw[red] (4,0) circle (12pt);
@@ -130,9 +158,13 @@ Als Grundlage verwenden wir die Timewarp Ridgid Body Simulation von~\cite{timewa
 \label{abb:kollision}
 \end{figure}
 
-Wie man in Abbildung~\ref{abb:kollision} erkennt, kollidieren die Kugeln $s_2$ und $s_3$. Jedoch erkennt $s_1$ auch eine Kollision mit $s_2$, die aber weiter in der Zukunft liegt als die andere Kollision. Deshalb verwenden wir die Timewarp Ridgid Body Simulation. Wir werden in diesem Abschnitt uns mit der Funktionalität des Algorithmus beschäftigen. Die Parlellisierung des Algorithmus wird im nächsten Kapitel beschrieben.
+In diesem Szenario ist zu erkennen, das bei einer paralellen Überprüfung die Kugel $s_1$ eine Kollision mit $s_3$ erkennt. Jedoch $s_3$ eigentlich mit $s_2$ kollidiert und die erkannte Kollision von $s_1$ nicht eintreten wird.  Dieses Problem werden wir nun mit der Timewarp Ridgid Body Simulation von~\cite{timewarp} lösen, wobei diese Version den Allgemeinen Timewarp Algorithmus von~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für parallele diskrete Event Simulation.\\
+Wir werden uns auf Kugel - Kugel Kollision beschränken, da die Ebene sich nicht bewegt. Das heißt die Kugel - Ebene Kollision ist immer eindeutig und es kann kein Fall wie in Abbildung~\ref{abb:kollision} eintreten. 
 
-\subsection{Übersicht}
+\subsection{Was repräsentiert ein Prozess?}
+Jeder Prozess repräsentiert eine Kugel, wobei dieser eine lokale virtuelle Zeit (LVT) besitzt. Diese LVT wird für die eigentliche Kollisionserkennung verwendet. Falls eine Kollision erkannt und akzeptiert wurde, speichern wir diese mit einem Zeitstempel in der sogenannten $stateQ$. Außerdem wird der LVT auf den Zeitstempel der eigefügten Kollision erhöht. Das Minimum aller LVTs bezeichnen wir als globale virtuelle Zeit (GVT).
+
+
 In unseren Simulation nehmen wir an, dass wir keine verbundenen Objekte haben. Jeder Prozess repräsentiert ein Objekt und hat eine lokale virtuelle Zeit (LVT). Außerdem besitzt jedes Objekt eine $stateQueue$. In dieser Queue werden alle möglichen Kollisionen mit einem Zeitstempel gespeichert. Zur Verifizierung und Kommunikation zwischen den einzelnen Objekten werden Events verwendet. Wir benötigen vier Arten von Events:
 \begin{enumerate}
 \item Kollisionskontrolle (EVENT)
