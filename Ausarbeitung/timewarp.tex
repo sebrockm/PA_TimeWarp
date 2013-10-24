@@ -169,7 +169,7 @@ Nachrichten einheitlich verarbeiten zu k"onnen, enthalten auch die anderen Nachr
 Zustands, wenngleich dieser dort g"anzlich ignoriert wird.
 
 \subsection{Events}
-Events werden immer dann verschickt, wenn ein Thread einen neuen Zustand seines Objektes erzeugt. Ist der Grund f"uer den
+Events werden immer dann verschickt, wenn ein Thread einen neuen Zustand seines Objektes erzeugt. Ist der Grund f"ur den
 neuen Zustand eine Kollision mit einem anderen Objekt, wird ein Event an den Kollisionspartner geschickt mit dessen
 neuen Zustand, um ihn "uber
 die Kollision zu benachrichtigen. Wird dagegen eine Kollision mit einer Ebene erkannt oder findet in dem betrachteten
@@ -198,8 +198,62 @@ Ein NACK wird verschickt, wenn der Empf"anger eines Events dieses verwirft. Das 
 da dort die gesamte Input-Queue gel"oscht wird. Der Absender des Events muss dann beim Empfang des zugeh"origen NACKs
 ebenfalls den erzeugten Zustand, der noch nicht in seine State-Queue eingef"ugt wurde, verwerfen.
 
+\subsection{Das Verschicken von Nachrichten}
+\label{subsec:VerschickenVonNachrichten}
+Das Verschicken von Nachrichten ist auf der GPU eine Herausforderung. Da es oft vorkommen kann, dass ein Thread
+gleichzeitig mehrere Nachrichten von unterschiedlichen anderen Threads bekommt, die dann in einen Heap eingef"ugt werden
+m"ussen, um sie chronologisch bearbeiten zu k"onnen, muss eine geeignete Synchronisierung
+benutzt werden. 
+
+In dieser Implementierung wurde dieses Problem so gel"ost, dass jeder Thread eine Queue f"ur die zu verschickenden
+Nachrichten zugesprochen bekommt, die sogenannte \emph{Mailbox}. Verschickt ein Thread eine Nachricht, so tut er dies,
+indem er sie in seine Mailbox einf"ugt.
+In einem weiteren
+Kernel durchsucht dann jeder Thread die Mailboxes aller anderen Threads nach Nachrichten, die an ihn addressiert sind
+und f"ugt sie in seinen Heap ein. Dabei besteht dann keine Gefahr von Schreibkonfilkten zwischen den Threads.
+
 
 \section{Kernelaufbau}
+\label{sec:Kernelaufbau}
+Der komplette Timewarp Algorithmus wurde auf mehrere Kernel aufgeteilt, um globale Synchronisationspunkte zu setzen, die
+insbesondere f"ur das Nachrichtensystem von Bedeutung sind (vgl. \ref{subsec:VerschickenVonNachrichten}).
+Diese Kernelaufrufe finden jeweils zwischen zwei Renderschritten in einer Schleife statt, die so lange durchlaufen wird,
+bis die GVT das vorgegebene Zeitintervall $dt$ (in der Regel ca. 60ms) erreicht hat.
+
+\subsection{Kernel zur Kollisionserkennung}
+Am Anfang der Schleife wird ein Kernel zur Kollisionserkennung aufgerufen. Dort pr"uft jeder Thread, mit welcher Ebene
+bzw. welcher anderen Kugel seine vorderste Kugel in der State-Queue als n"achstes kollidiert. Dabei ist
+darauf zu achten, dass nicht nur die vordersten States der anderen State-Queues beachtet werden, sondern alle mit einem
+gr"o\ss eren Zeitstempel als die eigene LVT, sodass es ggf. zum Rollback kommen kann. Der Zeitpunkt der n"achsten
+Kollision wird gespeichert und bez"uglich dieser Zeit werden neue Zust"ande der beiden Kollisionspartner erzeugt. Das
+hei\ss t, dass sie um diese Zeit entsprechend ihrer Geschwindigkeit bewegt werden, um dann die Kollisionsbehandlung
+durchzuf"uhren. Die So erzeugten Kugeln repr"asentieren den Zustand unmittlebar nach der Kollision.
+
+Der eigene neue Zustand wird zwischengespeichert, um ihn im Falles eines ACKs in die State-Queue einzuf"ugen. Der neue
+Zustand des Kollisionspartners wir mittels eines Events an diesen verschickt.
+
+F"ur den Fall, dass der n"achste Kollisionspartner eine Ebene ist oder im Zeitintervall $dt$ keine weiteren Kollisionen
+stattfinden, wird der neue Zustand unmittlebar nach der Kollision bzw. zum Zeitpunkt $dt$ mittels eines Events an sich
+selbst verschickt.
+
+\subsection{Reagieren auf Nachrichten}
+Wann immer Nachrichten verschickt worden sind, muss nach ihrer Zustellung ein Kernel aufgerufen werden, der die
+Nachrichten bearbeitet. Durch den Heap als Datenstruktur ist eine zeitlich korrekte abfolge dabei automatisch gegeben.
+
+Jeder Thread betrachtet sukzessive alle Nachrichten im Heap. Sollte er dabei feststellen, dass ein Event und ein
+zugeh"origes Antievent direkt aufeinander folgen, k"onnen beide direkt gel"oscht werden, da sie sich gegenseitig
+aufheben.
+
+Andernfalls muss abh"angig vom Nachrichtentyp reagiert werden.
+
+\subsection{Reagieren auf Events}
+Wird ein Event empfangen, muss zun"achst, falls dessen Zeitstempel vor der eigenen LVT liegt, 
+ein Rollback stattfinden (vgl. \ref{...}), bevor der mit dem Event gesendete
+Zustand in die State-Queue eingef"ugt werden kann. Anschlie\ss end muss ein ACK an den Absender gesendet werden, falls
+der Absender nicht der Thread selbst ist, da in diesem Fall der neue Zustand soeben
+bereits hinzugef"ugt wurde und das ACK diese Aufgabe somit nicht mehr "ubernehmen muss.
+
+
 
 \chapter{Fazit}
 \begin{thebibliography}{10}
