@@ -7,6 +7,8 @@
 \usepackage{amsmath, amsthm, amssymb, amscd, amsfonts, amsxtra}
 \usepackage{graphicx}
 \usepackage{epstopdf}
+\usepackage{tikz}
+
 
 \begin{document}
 
@@ -101,12 +103,41 @@ t_{1, 2} = -\frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v 
 Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision.
 \section{Timwarp Algorithmus}
 \label{sec:TimewarpAlgoritmus}
+Als Grundlage verwenden wir die Timewarp Ridgid Body Simulation von~\cite{timewarp}, wobei diese Version  den Allgemeinen Timewarp Algorithmus von Jefferson verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für eine paralelle diskrete Event Simulation. Wir beschränkten uns auf die Kollisionserkennung. Diese Kollisionserkennung kann nicht naiv implementiert werden, da es passieren kann, das erkannte Kollisionen sich gegenseitig aufheben (siehe Abbildung~\ref{abb:kollision}).
+
+\begin{figure}[t]
+\centering\begin{tikzpicture}
+\draw[blue] (-4,0) circle (12pt);
+\draw[red] (4,0) circle (12pt);
+\draw[green] (2,2) circle (12pt);
+\draw[gray] (0,0) circle (12pt);
+\draw[gray] (2,0) circle (12pt);
+\draw[line width=0.5mm, ->, dashed] (-4,0) -- (-3,0);
+\draw[line width=0.5mm, ->, dashed] (4,0) -- (3,0);
+\draw[line width=0.5mm, ->, dashed] (2,2) -- (2,1);
+\filldraw[draw=black,color=blue] (-4,-0) circle (12pt);
+\filldraw[draw=black,color=red] (4,0) circle (12pt);
+\filldraw[draw=black,color=green] (2,2) circle (12pt);
+\filldraw[draw=black,color=gray] (0,0) circle (12pt);
+\filldraw[draw=black,color=gray] (2,0) circle (12pt);
+\draw (-5, 0) node{$s_1$};
+\draw (5, 0) node{$s_3$};
+\draw (2, 3) node{$s_2$};
+\draw (0, -1) node{$t = 1$};
+\draw (2, -1) node{$t = 0.5$};
+\end{tikzpicture}
+\caption{Kollisionsproblem}
+\label{abb:kollision}
+\end{figure}
+
+Wie man in Abbidlung~\ref{abb:kollision} erkennt, kollidieren die Kugeln $s_2$ und $s_3$. Jedoch erkennt $s_1$ auch eine Kollision mit $s_2$, die aber weiter in der Zukunft liegt als die andere Kollision.
     % * Timewarp Algorithmus
     %     ** Rollback
     %     ** Nachrichtensystem
     %     ** Kollisionserkennung
     %     ** Varianten (Hinweis auf Multi Body etc.)
     %     ** LVT/GVT
+
 
 
 
