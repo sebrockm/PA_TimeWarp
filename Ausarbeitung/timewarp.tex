@@ -57,7 +57,7 @@ Osnabrück, den \today
 \pagenumbering{arabic}
 
 \chapter{Grundlagen}
-In diesem Kapitel werden wir uns mit den Timewarp Algoirthmus von~\cite{timewarp} beschäftigen und
+In diesem Kapitel werden wir uns mit den Timewarp Algorithmus von~\cite{timewarp} beschäftigen und
 Formeln für die Berechnung des exakten Zeitpunkts $t$ der Kollisionen herleiten, die von einem 
 Objekttyp abhängig sind.
 \section{Kollisionserkennung}
@@ -168,8 +168,7 @@ bewegen und somit auch keinen eigenen Thread ben"otigen, der ihre Bewegung durch
 In diesem Kapitel wird vorgestellt, wie der Timewarp Algorithmus auf der GPU mittels CUDA implementiert wurde. Dabei wird
 insbesondere auf Probleme eingegangen, die im Zuge der Implementierung aufgetreten sind, wie etwa die Umsetzung des
 Nachrichtensystems oder die Implementierung geeigneter Datenstrukturen, die ohne dynamisch allokierten Speicher
-auskommen. Denn es ist in CUDA zwar m"oglich, innerhalb eines Kernels Speicher dynamisch zu allokieren \cite{...}, aus
-Gr"unden der Effizienz sollte darauf aber so weit wie m"oglich verzichtet werden.
+auskommen.
 
 Abschlie\ss end wird die im Rahmen des Praktikums entstandene Version des Timewarp Algorithmus vollst"andig illustriert
 und erl"autert.
@@ -178,8 +177,8 @@ und erl"autert.
 \subsection{Dequeue}
 Im Timewarp Algorithmus ist es erforderlich, dass die Threads Zust"ande erzeugen, die den zeitlichen Werdegang der ihnen zugewiesenen
 Kugel repr"asentieren. Diese werden mit Zeitstempeln versehen und nach diesen geordnet zwischengespeichert, um ggf. einen Rollback zu einem
-fr"uheren Zustand durchf"uhren zu k"onnen. Aus dem gleichen Grund m"ussen auch alle verschickten Nachrichten gespeichert
-werden, um bei einem Rollback zugeh"orige Antimessages (vgl. \ref{...}) verschicken zu k"onnen.
+fr"uheren Zustand durchf"uhren zu k"onnen. Aus dem gleichen Grund m"ussen auch Antievents zu allen verschickten Events gespeichert
+werden, um sie bei einem Rollback (vgl. \ref{subsec:Rollback}) verschicken zu k"onnen.
 Gespeicherte Zust"ande und Nachrichten, deren Zeitstempel "alter als die GVT sind, k"onnen dabei bedenkenlos gel"oscht
 werden, da es keinen Rollback bis hinter die GVT geben kann.
 
@@ -201,54 +200,6 @@ Au\ss erdem kann er wie die Dequeue auf einem Array konstanter Gr"o\ss e arbeite
 Die Tatsache, dass ein Heap immer nur ausschlie\ss lich den Zugriff und das L"oschen des kleinsten Elements erlaubt, ist
 hier kein Nachteil, da jeder Thread immer nur eine eingehende Nachricht auf einmal bearbeitet und auch niemals Zugriff auf eine
 andere als die mit dem kleinsten Zeitstempel ben"otigt.
-
-% ab hier muss weg, aber ich lass es erstmal stehen
-\section{Nachrichten}
-Nachrichten spielen eine zentrale Rolle im Timewarp Algorithmus. In der hier implementierten Variante gibt es vier
-unterschiedliche Nachrichtentypen, die aber den gleichen Aufbau haben.
-\subsection{Aufbau einer Nachricht}
-Eine Nachricht setzt sich aus folgenden Komponenten zusammen: Typ, Zeitstempel, Empf"anger-ID, Absender-ID und neuer
-Zustand.
-
-Dabei gibt es die folgenden vier verschiedenen Nachrichtentypen:
-Events, Antievents, Event-Acknowledgements (ACK) und Event-Negative-Acknowledgements (NACK).
-
-Die IDs von Empf"anger und Absender beziehen sich dabei jeweils direkt auf die globale ID des jeweiligen Threads. Der
-neue Zustand wird nur ben"otigt, wenn es sich um eine Nachricht vom Typ Event handelt. Es handelt sich dabei de facto um
-ein vollst"andiges Objekt mit Angaben "uber Position, Geschwindigkeit, Rotationsgeschwindigkeit und Rotationsstatus. Um
-Nachrichten einheitlich verarbeiten zu k"onnen, enthalten auch die anderen Nachrichtentypen das Datenfeld des neuen
-Zustands, wenngleich dieser dort g"anzlich ignoriert wird.
-
-\subsection{Events}
-Events werden immer dann verschickt, wenn ein Thread einen neuen Zustand seines Objektes erzeugt. Ist der Grund f"ur den
-neuen Zustand eine Kollision mit einem anderen Objekt, wird ein Event an den Kollisionspartner geschickt mit dessen
-neuen Zustand, um ihn "uber
-die Kollision zu benachrichtigen. Wird dagegen eine Kollision mit einer Ebene erkannt oder findet in dem betrachteten
-Zeitintervall (also zwischen zwei Rendervorg"angen) keine Kollision mehr statt, wird ebenfalls ein neuer Zustand
-erzeugt, den der Thread mit einem Event an sich selbst verschickt. Dieses Vorgehen mag zun"achst umst"andlich erscheinen. Es ist aber
-durchaus sinnvoll, da immer damit zu rechnen ist, auch noch Nachrichten mit einem kleineren Zeitstempel von anderen
-Threads zu erhalten, die dann einen unn"otigen Rollback ausl"osen w"urden, sollte der neue Zustand zu voreilig akzeptiert
-werden. Daher wird der eigene neue Zustand erst dann in die State-Queue eingef"ugt, wenn der Empf"anger mit einem ACK
-geantwortet hat.
-
-\subsection{Antievents}
-Antievents bilden das Gegenst"uck zu Events. Sie sind zentraler Bestandteil des Rollback-Mechanismus. Empf"angt ein
-Thread ein Event oder Antievent, dessen Zeitstempel kleiner ist als der des aktuellen Zustands, muss ein Rollback eingeleitet
-werden. Das bedeutet einerseits, dass alle Zust"ande mit einem gr"o\ss eren Zeitstempel wieder aus der State-Queue gel"oscht werden m"ussen, und
-andererseits, dass alle verschickten Events mit einem gr"o\ss eren Zeitstempel f"ur ung"ultig erkl"art werden m"ussen.
-Die Empf"anger dieser Events werden daher mit
-zugeh"origen Antievents "uber diese Situation informiert, sodass sie dann ihrerseits einen Rollback einleiten k"onnen.
-
-\subsection{Event-Acknowledgement}
-Ein ACK ist die Antwort auf ein Event. Ein Thread, der ein Event empfangen hat und den darin enthaltenen Zustand in
-seine State-Queue einf"ugt, muss daraufhin ein ACK an der Absender des Events schicken. Dieser kann daraufhin
-ebenfalls den neuen Zustand in seine State-Queue einf"ugen.
-
-\subsection{Event-Negative-Acknowledgement}
-Ein NACK wird verschickt, wenn der Empf"anger eines Events dieses verwirft. Das kann w"ahrend eines Rollbacks geschehen,
-da dort die gesamte Input-Queue gel"oscht wird. Der Absender des Events muss dann beim Empfang des zugeh"origen NACKs
-ebenfalls den erzeugten Zustand, der noch nicht in seine State-Queue eingef"ugt wurde, verwerfen.
-% bis hier
 
 \section{Kernelaufbau}
 \label{sec:Kernelaufbau}
@@ -278,27 +229,30 @@ erfolgt in konstanter Zeit.
 
 
 \subsection{Kernel zur Kollisionserkennung}
-Am Anfang der Schleife wird ein Kernel zur Kollisionserkennung (\emph{''detectCollisions''}) aufgerufen. Dort pr"uft jeder Thread, mit welcher Ebene
+\label{subsec:KernelZurKollisionserkennung}
+Am Anfang der Schleife wird ein Kernel \emph{''detectCollisions''} zur Kollisionserkennung aufgerufen. Dort pr"uft jeder Thread, mit welcher Ebene
 bzw. welcher anderen Kugel das Front-Element seiner State-Queue als n"achstes kollidiert. Dabei ist
 darauf zu achten, alle Eintr"age der anderen State-Queues mit einem
-gr"o\ss eren Zeitstempel als der eigenen LVT betrachtet werden, sodass es ggf. zum Rollback kommen kann. Der Zeitpunkt der n"achsten
+gr"o\ss eren Zeitstempel als der eigenen LVT zu betrachten, sodass es ggf. zum Rollback kommen kann. Der Zeitpunkt der n"achsten
 Kollision wird gespeichert und bez"uglich dieser Zeit werden neue Zust"ande der beiden Kollisionspartner erzeugt. Das
-hei\ss t, dass sie um diese Zeit entsprechend ihrer Geschwindigkeit bewegt werden, um dann an dieser Position, an der
-sie sich so eben ber"uhren, die Kollisionsbehandlung
+hei\ss t, dass sie um diese Zeit entsprechend ihrer Geschwindigkeit bewegt werden, um dann an diesen Positionen, an
+denen sie sich so eben ber"uhren, die Kollisionsbehandlung
 durchzuf"uhren. Die So erzeugten Kugeln repr"asentieren den Zustand unmittlebar nach der Kollision.
 
 Der eigene neue Zustand wird zwischengespeichert, aber noch nicht in die State-Queue eingef"ugt (s.a. Abschnitt
 \ref{subsubsed:ReagierenAufACKs}. Der neue
 Zustand des Kollisionspartners wird mittels eines Events an diesen verschickt. Direkt nach dem Versenden des Events muss
-ein zugeh"origes Antievent in die Output-Queue eingef"ugt werden (vgl. Abschnitt \ref{subsec:Rollback}).
+ein zugeh"origes Antievent in die sogenannte Output-Queue eingef"ugt werden. Diese Queue kommt beim Rollback (vgl.
+Abschnitt \ref{subsec:Rollback}) zum Einsatz, wenn versandte Events mit Antievents wieder r"uckg"angig gemacht werden
+m"ussen.
 
 F"ur den Fall, dass der n"achste Kollisionspartner eine Ebene ist oder im Zeitintervall $dt$ keine weiteren Kollisionen
 erkannt werden, erzeugt der Thread den neuen Zustand unmittlebar nach der Kollision bzw. zum Zeitpunkt $dt$ und schickt
 ihn mittels eines Events an sich selbst.
 
 \subsection{Reagieren auf Nachrichten}
-Wann immer Nachrichten verschickt worden sind, muss nach ihrer Zustellung ein Kernel aufgerufen werden, der die
-Nachrichten bearbeitet. Durch den Heap als Datenstruktur ist eine zeitlich korrekte abfolge dabei automatisch gegeben.
+Wann immer Nachrichten verschickt worden sind, muss nach ihrer Zustellung ein Kernel \emph{''handleNextMessages''} aufgerufen werden, der die
+Nachrichten bearbeitet. Durch den Heap als Datenstruktur ist eine zeitlich korrekte Abfolge dabei automatisch gegeben.
 
 Jeder Thread betrachtet sukzessive alle Nachrichten im Heap. Sollte er dabei feststellen, dass ein Event und ein
 zugeh"origes Antievent direkt aufeinander folgen, k"onnen beide direkt gel"oscht werden, da sie sich gegenseitig
@@ -308,15 +262,45 @@ Andernfalls muss abh"angig vom Nachrichtentyp reagiert werden.
 
 \subsubsection{Reagieren auf Events}
 Wird ein Event empfangen, muss zun"achst, falls dessen Zeitstempel vor der eigenen LVT liegt, 
-ein Rollback stattfinden (vgl. \ref{...}), bevor der mit dem Event gesendete
-Zustand in die State-Queue eingef"ugt werden kann. Anschlie\ss end muss ein ACK an den Absender gesendet werden, falls
-der Absender nicht der Thread selbst ist, da in diesem Fall der neue Zustand soeben
+ein Rollback stattfinden (s. \ref{subsec:Rollback}), bevor der mit dem Event gesendete
+Zustand in die State-Queue eingef"ugt werden kann. Ist der Absender des Events ein anderer Thread (das Event
+benachrichtigt also "uber die Kollision zweier Kugeln), muss ein ACK an den Absender gesendet werden. Andernfalls, wenn
+das Event vom Thread an sich selbst gesendet wurde, entf"allt die Notwendigkeit eines ACKs, da in diesem Fall der neue Zustand soeben
 bereits hinzugef"ugt wurde und das ACK diese Aufgabe somit nicht mehr "ubernehmen muss.
 
 \subsubsection{Reagieren auf Antievents}
+Beim Empfang eines Antievents muss der Zustand in der State-Queue gesucht werden, der aufgrund des zugeh"origen Events
+dort eingef"ugt wurde. Ein Rollback muss dann diesen Zustand sowie alle folgenden Zust"ande in der State-Queue
+l"oschen.
 
 \subsubsection{Reagieren auf ACKs}
 \label{subsubsed:ReagierenAufACKs}
+Wird ein ACK empfangen, muss zuvor ein Event verschickt worden sein. Der neue Zustand, der beim Schicken dieses
+Events zwischengespeichert wurde (s. \ref{subsec:KernelZurKollisionserkennung}), kann nun in die State-Queue eingef"ugt
+werden, wenn er nicht zuvor z.B. durch einen Rollback gel"oscht wurde.
+
+\subsubsection{Reagieren auf NACKs}
+Wie ein ACK kann auch ein empfangenes NACK nur die Folge eines zuvor verschickten Events sein. Der zwischengespeicherte
+Zustand muss dann einfach gel"oscht werden.
+
+\subsection{Berechnung der GVT}
+Ziel des Timewarp Algorithmus ist, dass die GVT den den Wert des Zeitintervalls zwischen zwei Rendervorg"angen $dt$
+erreicht. Um die GVT zu berechnen, m"ussen zun"achst alle LVTs ermittelt werden. Diese Aufgabe "ubernimmt ein Kernel
+\emph{''calculateLVT''}, in dem jeder Thread seine eigene LVT, also das Minimum aus den beiden Zeitstempeln der
+n"achsten Nachricht im Heap und des j"ungsten Zustands der State-Queue, in ein Array schreibt. Mittels einer Reduktion
+wird dann die kleinste dieser LVTs, also die GVT, ermittelt.
+
+In einem weiteren Kernel \emph{''deletOlderThanGVT''} werden dann alle Zust"ande und Nachrichten der State-Queues und
+Output-Queues gel"oscht, die "alter sind als die GVT. Das ist m"oglich, da sie nur f"ur den Fall eines Rollbacks
+gespeichert wurden. Es kann aber keinen Rollback hinter die GVT geben. Auf diese Weise wird regelm"a\ss ig wieder Platz
+in den Dequeues freigegeben, die ja nur ein limitiertes Fassungsverm"ogen haben.
+
+\subsection{Rollback}
+\label{subsec:Rollback}
+Der Rollback ist die zentrale Funktion des Timewarp Algorithmus. Beim Rollback m"ussen zun"achst alle Zust"ande in der
+State-Queue ab dem gegebenen Zeitstempel gel"oscht werden. Anschlie\ss end werden alle Antievents der Output-Queue ab
+diesem Zeitstempel verschickt. Dann werden s"amtliche Nachrichten, die noch im Heap stehen, gel"oscht. Dabei m"ussen
+alle Events vor dem L"oschen mit einem NACK beantwortet werden.
 
 \chapter{Fazit}
 \begin{thebibliography}{10}
