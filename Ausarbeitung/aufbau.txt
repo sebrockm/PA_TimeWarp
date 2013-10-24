@@ -5,31 +5,80 @@ Aufbau:
 3. Inhaltsverzeichnis
 4. Abbildungsverzeichnis
 5. Grundlagen (4 Seiten) (Dominik)
-    * Einleitung (Fließtext)
-    * Kollisionserkennung (Zeitberechnung, Formel)
-        ** Ebene - Kugel
-        ** Kugel - Kugel
-    * Timewarp Algorithmus
-        ** Rollback
-        ** Nachrichtensystem
-        ** Kollisionserkennung
-        ** Varianten (Hinweis auf Multi Body etc.)
-        ** LVT/GVT
+    Einleitung:
+    I   Kollisionserkennung
+        Einleitung:
+        - Problem
+            * Warum verwenden wir kein naiven Ansatz?
+            * kontinuierliche Kollisionserkennung (parallele Berechnung)
+        - Berechnung des genauen  Kollisionszeitpunktes
+        - Warum benötigen diese Formeln?
+            * kontinuierliche Kollisionerkennung
+                ** keine Überschneidungen
+            * alternative: diskrete Kollisionserkennung
+                ** das ist zu vermeiden
+                ** d.h. Kollisions werden erst erkannt wenn Sie stattgefunden haben
+        1. Kugel - Kugel 
+            * Definieren der Grundlagen
+            * Herleitung der Formel
+        2. Kugel - Ebene
+            * Definieren der Grundlagen
+            * Herleitung der Formel
+    II  Timewarp Algorithmus
+        * Erläuterung was Prozesse sind
+            ** Kugeln
+            ** jeder Prozess hat eine LVT
+            ** GVT (minimum aller LVTs)
+            ** jeder Prozess hat eine StateQueue
+            ** verschicken von Nachrichten (EVENTS)
+        * Events (4 Stück)
+            ** Kollsionserkennung (EVENT)
+            ** (ANTIEVENT)
+            ** Bestätigung (ACK)
+            ** Absage (NACK)
+        * Algorithmus Ablauf
+            ** Erläuterung anhand eines Beispiels
+            ** Rollback
+            ** Nachrichtenablauf
+            ** Kollisionserkennung
+
 6. Timwarp Algorithmus auf der GPU(Grafikkarte) (4 Seiten) (Sebastian)
-    * Einleitung (Fließtext)
-    * Probleme
-		** Nachrichten (Art und Weise des Verschickens)
-			*** Aufbau einer Nachricht
-		** Datenstruckturen
-	* Kernelaufbau
-		** Kernel
-			*** Funktionalität
-			*** Zusammenhang
-		** Diagramm
-			*** kurze Erklärung
+    Einleitung:
+        - Ziel dieses Abschnitts
+    Kernel     
+        * Datenstrukturen
+            ** Heap
+                *** Verwendung
+            ** DQueue
+                *** Verwendung
+        * Vorstellen der Kernels und der Funktionen
+            ** cpToStateQs
+            ** Rollback
+            ** detectCollisions
+                *** antimessages speichern
+                *** messages verschicken (EVENTS)
+            ** receiveFromMailboxes
+            ** removeFromMailboxes
+                *** Aufräumen
+            ** handleNextMessages
+                *** Bearbeitung aller neuen Nachrichten
+                *** verschicken von ACK
+                *** verschciken von NACK
+            ** calculateLVT
+                *** Berechnung des jeweiligen LVTs
+            ** reduction
+            ** delteOlderThanGVT
+                *** Aufräumen
+            ** cpFromState
+            ** accelerate
+        * Diagramm
+            ** Kernelstruktur mittels Diagramm erläutern
+            ** Zusammenhänge darstellen
+            ** Rendern
 7. Fazit (Beide) (1 Seite)
     * Kernellaufzeit (Vergleich mit Bachelorarbeit von S.B.)
     * Ablauf
+    * Probleme
     * etc.
 8. Literaturliste
     * Jefferson Time Warp Algorithmus

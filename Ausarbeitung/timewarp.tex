@@ -103,7 +103,7 @@ t_{1, 2} = -\frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v 
 Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision.
 \section{Timwarp Algorithmus}
 \label{sec:TimewarpAlgoritmus}
-Als Grundlage verwenden wir die Timewarp Ridgid Body Simulation von~\cite{timewarp}, wobei diese Version  den Allgemeinen Timewarp Algorithmus von Jefferson verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für eine paralelle diskrete Event Simulation. Wir beschränkten uns auf die Kollisionserkennung. Diese Kollisionserkennung kann nicht naiv implementiert werden, da es passieren kann, das erkannte Kollisionen sich gegenseitig aufheben (siehe Abbildung~\ref{abb:kollision}).
+Als Grundlage verwenden wir die Timewarp Ridgid Body Simulation von~\cite{timewarp}, wobei diese Version  den Allgemeinen Timewarp Algorithmus von Jefferson~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für eine parlelle diskrete Event Simulation. Wir beschränkten uns auf die Kollisionserkennung. Diese Kollisionserkennung kann nicht naiv implementiert werden, da es passieren kann, das erkannte Kollisionen sich gegenseitig aufheben (siehe Abbildung~\ref{abb:kollision}).
 
 \begin{figure}[t]
 \centering\begin{tikzpicture}
@@ -130,7 +130,21 @@ Als Grundlage verwenden wir die Timewarp Ridgid Body Simulation von~\cite{timewa
 \label{abb:kollision}
 \end{figure}
 
-Wie man in Abbidlung~\ref{abb:kollision} erkennt, kollidieren die Kugeln $s_2$ und $s_3$. Jedoch erkennt $s_1$ auch eine Kollision mit $s_2$, die aber weiter in der Zukunft liegt als die andere Kollision.
+Wie man in Abbildung~\ref{abb:kollision} erkennt, kollidieren die Kugeln $s_2$ und $s_3$. Jedoch erkennt $s_1$ auch eine Kollision mit $s_2$, die aber weiter in der Zukunft liegt als die andere Kollision. Deshalb verwenden wir die Timewarp Ridgid Body Simulation. Wir werden in diesem Abschnitt uns mit der Funktionalität des Algorithmus beschäftigen. Die Parlellisierung des Algorithmus wird im nächsten Kapitel beschrieben.
+
+\subsection{Übersicht}
+In unseren Simulation nehmen wir an, dass wir keine verbundenen Objekte haben. Jeder Prozess repräsentiert ein Objekt und hat eine lokale virtuelle Zeit (LVT). Außerdem besitzt jedes Objekt eine $stateQueue$. In dieser Queue werden alle möglichen Kollisionen mit einem Zeitstempel gespeichert. Zur Verifizierung und Kommunikation zwischen den einzelnen Objekten werden Events verwendet. Wir benötigen vier Arten von Events:
+\begin{enumerate}
+\item Kollisionskontrolle (EVENT)
+\item Rollback (ANTIEVENT)
+\item Bestätigung (ACK)
+\item Absagen (NACK)
+\end{enumerate}
+Diese Event - Nachrichten sind der wesentliche Bestandteil des Algorithmus, da dadurch das Problem aus Abb~\ref{abb:kollision} verhindert wird.
+\subsection{Rollback}
+\subsection{Event}
+\subsection{AntiEvent}
+\subsection{LVT / GVT}
     % * Timewarp Algorithmus
     %     ** Rollback
     %     ** Nachrichtensystem
@@ -293,6 +307,9 @@ Brian Mirtich. Timewarp Rigid Body Simulation. MERL - A MITSUBISHI ELECTRIC RESE
 
 \bibitem{timewarp-cpu}
 John Koenig. Object-Centric Parallel Rigid Body Simulation With Timewarp. University of Minnesota
+
+\bibitem{jefferson}
+David R. Jefferson. Virtual time. ACM Transactions on Programming Languages and Systems, 7(3):404–425, July 1985.
 \end{thebibliography}
 \end{document}
 
