@@ -162,6 +162,9 @@ parallel ausgef"uhrt werden. Jeder Thread berechnet dabei den zeitlichen Verlauf
 und neue States erzeugt, anderen Threads Nachrichten schickt und seinerseits Nachrichten von anderen Threads empf"angt
 und darauf reagiert. 
 
+In unserem Fall handelt es sich bei den Objekten ausschlie\ss lich um Kugeln und Ebenen, wobei sich die Ebenen nicht
+bewegen und somit auch keinen eigenen Thread ben"otigen, der ihre Bewegung durch die Szene verwaltet.
+
 In diesem Kapitel wird vorgestellt, wie der Timewarp Algorithmus auf der GPU mittels CUDA implementiert wurde. Dabei wird
 insbesondere auf Probleme eingegangen, die im Zuge der Implementierung aufgetreten sind, wie etwa die Umsetzung des
 Nachrichtensystems oder die Implementierung geeigneter Datenstrukturen, die ohne dynamisch allokierten Speicher
@@ -173,8 +176,8 @@ und erl"autert.
 
 \section{Datenstrukturen}
 \subsection{Dequeue}
-Im Timewarp Algorithmus ist es erforderlich, dass die Threads States erzeugen, die die Zust"ande des ihnen zugewiesenen
-Objektes repr"asentieren, und diese mit Zeitstempeln versehen zwischenspeichern, um ggf. einen Rollback zu einem
+Im Timewarp Algorithmus ist es erforderlich, dass die Threads Zust"ande erzeugen, die den zeitlichen Werdegang der ihnen zugewiesenen
+Kugel repr"asentieren. Diese werden mit Zeitstempeln versehen und nach diesen geordnet zwischengespeichert, um ggf. einen Rollback zu einem
 fr"uheren Zustand durchf"uhren zu k"onnen. Aus dem gleichen Grund m"ussen auch alle verschickten Nachrichten gespeichert
 werden, um bei einem Rollback zugeh"orige Antimessages (vgl. \ref{...}) verschicken zu k"onnen.
 Gespeicherte Zust"ande und Nachrichten, deren Zeitstempel "alter als die GVT sind, k"onnen dabei bedenkenlos gel"oscht
@@ -187,6 +190,8 @@ Speicher ben"otigt. Dieser Vorteil ist allerdings zugleich auch ein Nachteil, da
 Weiters vergr"o\ss ern kann. Es sei an dieser Stelle allerdings schon darauf hingewiesen, dass keine der eingesetzten
 Dequeues in den Szenarien jemals eine Gr"o\ss e von f"unf "uberschritten hat, sodass eine feste Gr"o\ss e von 20
 gew"ahlt wurde, um einerseits allen Eventualit"aten entgegenzukommen und andererseits nicht zu viel Speicher zu belegen.
+Ein weiterer Vorteil ist, dass auf jedes Element in konstanter Zeit zugegriffen werden kann. Ebenfalls in konstanter
+Zeit kann ein L"osch- oder Einf"ugevorgang am Anfang und am Ende der Dequeue durchgef"uhrt werden.
 
 \subsection{Heap}
 Da ein Thread mehrere Nachrichten auf einmal bekommen kann, die er dann nach Zeitstempeln sortiert abarbeiten muss,
@@ -197,6 +202,7 @@ Die Tatsache, dass ein Heap immer nur ausschlie\ss lich den Zugriff und das L"os
 hier kein Nachteil, da jeder Thread immer nur eine eingehende Nachricht auf einmal bearbeitet und auch niemals Zugriff auf eine
 andere als die mit dem kleinsten Zeitstempel ben"otigt.
 
+% ab hier muss weg, aber ich lass es erstmal stehen
 \section{Nachrichten}
 Nachrichten spielen eine zentrale Rolle im Timewarp Algorithmus. In der hier implementierten Variante gibt es vier
 unterschiedliche Nachrichtentypen, die aber den gleichen Aufbau haben.
@@ -242,44 +248,53 @@ ebenfalls den neuen Zustand in seine State-Queue einf"ugen.
 Ein NACK wird verschickt, wenn der Empf"anger eines Events dieses verwirft. Das kann w"ahrend eines Rollbacks geschehen,
 da dort die gesamte Input-Queue gel"oscht wird. Der Absender des Events muss dann beim Empfang des zugeh"origen NACKs
 ebenfalls den erzeugten Zustand, der noch nicht in seine State-Queue eingef"ugt wurde, verwerfen.
-
-\subsection{Das Verschicken von Nachrichten}
-\label{subsec:VerschickenVonNachrichten}
-Das Verschicken von Nachrichten ist auf der GPU eine Herausforderung. Da es oft vorkommen kann, dass ein Thread
-gleichzeitig mehrere Nachrichten von unterschiedlichen anderen Threads bekommt, die dann in einen Heap eingef"ugt werden
-m"ussen, um sie chronologisch bearbeiten zu k"onnen, muss eine geeignete Synchronisierung
-benutzt werden. 
-
-In dieser Implementierung wurde dieses Problem so gel"ost, dass jeder Thread eine Queue f"ur die zu verschickenden
-Nachrichten zugesprochen bekommt, die sogenannte \emph{Mailbox}. Verschickt ein Thread eine Nachricht, so tut er dies,
-indem er sie in seine Mailbox einf"ugt.
-In einem weiteren
-Kernel durchsucht dann jeder Thread die Mailboxes aller anderen Threads nach Nachrichten, die an ihn addressiert sind
-und f"ugt sie in seinen Heap ein. Dabei besteht dann keine Gefahr von Schreibkonfilkten zwischen den Threads.
-
+% bis hier
 
 \section{Kernelaufbau}
 \label{sec:Kernelaufbau}
 Der komplette Timewarp Algorithmus wurde auf mehrere Kernel aufgeteilt, um globale Synchronisationspunkte zu setzen, die
-insbesondere f"ur das Nachrichtensystem von Bedeutung sind (vgl. \ref{subsec:VerschickenVonNachrichten}).
+insbesondere f"ur das Nachrichtensystem von Bedeutung sind. 
 Diese Kernelaufrufe finden jeweils zwischen zwei Renderschritten in einer Schleife statt, die so lange durchlaufen wird,
 bis die GVT das vorgegebene Zeitintervall $dt$ (in der Regel ca. 60ms) erreicht hat.
 
+\subsection{Verschicken von Nachrichten}
+\label{subsec:VerschickenVonNachrichten}
+Das Verschicken von Nachrichten ist auf der GPU eine Herausforderung. Es ist nicht ohne Weiteres m"oglich, eine zu sendende
+Nachricht direkt in den Heap des Empf"angers einzuf"ugen, da auch andere Threads dies zur gleichen Zeit durchf"uhren
+k"onnten, was zu Schreibkonfilkten f"uhren w"urde.
+
+In dieser Implementierung wurde dieses Problem so gel"ost, dass jeder Thread eine Queue f"ur die zu verschickenden
+Nachrichten zugesprochen bekommt, die sogenannte \emph{Mailbox}. Wann immer wir vom Verschicken einer Nachricht
+sprechen, so bedeutet dies, dass die Nachricht zun"achst lediglich in die eigene Mailbox eingef"ugt wird.
+In einem separaten
+Kernel \emph{''receiveFromMailboxes''} durchsucht dann jeder Thread die Mailboxes aller anderen Threads nach
+Nachrichten, die an ihn addressiert sind,
+und f"ugt sie in seinen eigenen Heap ein. Dabei besteht keine Gefahr von Schreibkonfilkten zwischen den Threads.
+Ein offensichtlicher Nachteil ist die Laufzeit.
+
+Nach dem Aufruf von \emph{''receiveFromMailboxes''} m"ussen die Mailboxes wieder geleert werden. Aus
+Synchronisationsgr"unden geschieht dies in einem eigenen Kernel \emph{''clearMailboxes''}. Das Leeren einer Dequeue
+erfolgt in konstanter Zeit.
+
+
 \subsection{Kernel zur Kollisionserkennung}
-Am Anfang der Schleife wird ein Kernel zur Kollisionserkennung aufgerufen. Dort pr"uft jeder Thread, mit welcher Ebene
-bzw. welcher anderen Kugel seine vorderste Kugel in der State-Queue als n"achstes kollidiert. Dabei ist
-darauf zu achten, dass nicht nur die vordersten States der anderen State-Queues beachtet werden, sondern alle mit einem
-gr"o\ss eren Zeitstempel als die eigene LVT, sodass es ggf. zum Rollback kommen kann. Der Zeitpunkt der n"achsten
+Am Anfang der Schleife wird ein Kernel zur Kollisionserkennung (\emph{''detectCollisions''}) aufgerufen. Dort pr"uft jeder Thread, mit welcher Ebene
+bzw. welcher anderen Kugel das Front-Element seiner State-Queue als n"achstes kollidiert. Dabei ist
+darauf zu achten, alle Eintr"age der anderen State-Queues mit einem
+gr"o\ss eren Zeitstempel als der eigenen LVT betrachtet werden, sodass es ggf. zum Rollback kommen kann. Der Zeitpunkt der n"achsten
 Kollision wird gespeichert und bez"uglich dieser Zeit werden neue Zust"ande der beiden Kollisionspartner erzeugt. Das
-hei\ss t, dass sie um diese Zeit entsprechend ihrer Geschwindigkeit bewegt werden, um dann die Kollisionsbehandlung
+hei\ss t, dass sie um diese Zeit entsprechend ihrer Geschwindigkeit bewegt werden, um dann an dieser Position, an der
+sie sich so eben ber"uhren, die Kollisionsbehandlung
 durchzuf"uhren. Die So erzeugten Kugeln repr"asentieren den Zustand unmittlebar nach der Kollision.
 
-Der eigene neue Zustand wird zwischengespeichert, um ihn im Falles eines ACKs in die State-Queue einzuf"ugen. Der neue
-Zustand des Kollisionspartners wir mittels eines Events an diesen verschickt.
+Der eigene neue Zustand wird zwischengespeichert, aber noch nicht in die State-Queue eingef"ugt (s.a. Abschnitt
+\ref{subsubsed:ReagierenAufACKs}. Der neue
+Zustand des Kollisionspartners wird mittels eines Events an diesen verschickt. Direkt nach dem Versenden des Events muss
+ein zugeh"origes Antievent in die Output-Queue eingef"ugt werden (vgl. Abschnitt \ref{subsec:Rollback}).
 
 F"ur den Fall, dass der n"achste Kollisionspartner eine Ebene ist oder im Zeitintervall $dt$ keine weiteren Kollisionen
-stattfinden, wird der neue Zustand unmittlebar nach der Kollision bzw. zum Zeitpunkt $dt$ mittels eines Events an sich
-selbst verschickt.
+erkannt werden, erzeugt der Thread den neuen Zustand unmittlebar nach der Kollision bzw. zum Zeitpunkt $dt$ und schickt
+ihn mittels eines Events an sich selbst.
 
 \subsection{Reagieren auf Nachrichten}
 Wann immer Nachrichten verschickt worden sind, muss nach ihrer Zustellung ein Kernel aufgerufen werden, der die
@@ -291,14 +306,17 @@ aufheben.
 
 Andernfalls muss abh"angig vom Nachrichtentyp reagiert werden.
 
-\subsection{Reagieren auf Events}
+\subsubsection{Reagieren auf Events}
 Wird ein Event empfangen, muss zun"achst, falls dessen Zeitstempel vor der eigenen LVT liegt, 
 ein Rollback stattfinden (vgl. \ref{...}), bevor der mit dem Event gesendete
 Zustand in die State-Queue eingef"ugt werden kann. Anschlie\ss end muss ein ACK an den Absender gesendet werden, falls
 der Absender nicht der Thread selbst ist, da in diesem Fall der neue Zustand soeben
 bereits hinzugef"ugt wurde und das ACK diese Aufgabe somit nicht mehr "ubernehmen muss.
 
+\subsubsection{Reagieren auf Antievents}
 
+\subsubsection{Reagieren auf ACKs}
+\label{subsubsed:ReagierenAufACKs}
 
 \chapter{Fazit}
 \begin{thebibliography}{10}
