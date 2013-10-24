@@ -64,6 +64,7 @@ Für den Timewarp Algorithmus benötigen wir später den exakten Zeitpunkt einer
 auf den Objekttypen Kugel und Ebene beschränkten, reicht es für 2 mögliche Arten von Kollisionen 
 (Kugel - Kugel und Kugel - Ebene) eine Formel herzuleiten.\\
 
+\subsection{Kugel - Kugel Kollision}
 \noindent Zunächst konzentrieren wir uns auf die Kugel - Kugel Kollision. Dafür benötigen wir die 2 Kugeln 
 $s_1$ und $s_2$ zum gleichen Zeitpunkt, mit den Radien $s_1.r$ und $s_2.r$, den Geschwindigkeitsvektoren
 $s_1.v$ und $s_2.v$ und die Positionen $s_1.p$ und $s_2.p$. Wir verwenden für die Abstandsberechnung die
@@ -94,7 +95,10 @@ $\langle s_{12}.v, s_{12}.v \rangle = 0$ und $\langle s_{12}.p, s_{12}.v\rangle 
 t_{1, 2} = -\frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \pm \sqrt{ \left( \frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \right)^{2} + \frac{(s_{1}.r + s_{2}.r)^{2} + \langle s_{12}.p, s_{12}.p\rangle}{\langle s_{12}.v, s_{12}.v \rangle}}\text{.}
 \end{equation*}
 
-\noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei es bei mehreren Lösungen den nächsten Zeitpunkt gewählt wird und Zeitpunkte in der Vergangenheit werden missachtet. etzt bestimmen wir die Formel für die Ebene-Kugel Kollision.
+\noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei es bei mehreren Lösungen den nächsten Zeitpunkt gewählt wird und Zeitpunkte in der Vergangenheit werden missachtet. 
+
+\subsection{Kugel - Ebene Kollision}
+Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision.
 \section{Timwarp Algorithmus}
 \label{sec:TimewarpAlgoritmus}
     % * Timewarp Algorithmus
