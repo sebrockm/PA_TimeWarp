@@ -24,7 +24,7 @@
 \vspace{1mm}\rule{\textwidth}{0.1mm}
 \vfill
 \Large
-Ausarbeitung\\
+Praktikumsausarbeitung\\
 Sebastian Brockmeyer und Dominik Krümpelmann
 \vfill
 \normalsize
@@ -42,6 +42,18 @@ Osnabrück, den \today
 \chapter*{Einleitung}
 \addcontentsline{toc}{chapter}{Einleitung}
 \setcounter{page}{1}
+In dieser Praktikumsausarbeitung werden wir uns damit auseinandersetzen, wie kontinuierliche Kollisionserkennung parallel auf der Grafikkarte (GPU)
+implementiert werden kann. Als Grundlage diente einerseits die Bachelorarbeit von Sebastian Brockmeyer \cite{bachelor}. Dort wurde mit diskreter 
+Kollisionserkennung eine Physiksimulation mit einfachen K"orpern implementiert. Anderseits verwenden wir die Ideen der \emph{Timwarp Rigid Body Simulation} von Brian Mirtich \cite{timewarp}
+und John Koenig \cite{timewarp-cpu}.
+
+Die kontinuierliche Kollisionserkennung unterscheidet sich dadurch von der diskreten, dass Kollisionen bereits im
+Voraus berechnet werden, um so den exakten Kollsionspunkt zu bestimmen. Bei der diskreten Variante hingegen wird eine Kollision erst dadurch erkannt,
+dass sich die Objetkte bereits "uberschneiden. Sie stellt also nur ein grobe N"aherung der Realit"at dar.
+
+Zun"achst werden wir im ersten Kapitel die Grundlagen erl"autern und den abgewandelten Timewarp Algorithmus vorstellen.
+Daraufhin wird im zweiten Kapitel auf die parallele Implementierung eingegangen.
+
 
 \newpage
 \mbox{}
@@ -58,11 +70,12 @@ Osnabrück, den \today
 \pagenumbering{arabic}
 
 \chapter{Grundlagen}
-In diesem Kapitel werden wir uns mit dem Timewarp Algoirthmus von~\cite{timewarp} beschäftigen und
+In diesem Kapitel werden wir uns mit dem Timewarp Algorithmus von~\cite{timewarp} beschäftigen und
 Formeln für die Berechnung des exakten Zeitpunkts $t$ der Kollisionen herleiten, die von einem 
 Objekttyp abhängig sind.
 
 \section{Kollisionserkennung}
+\label{sec:Kollisionserkennung}
 Die Berechnung des exakten Zeitpunktes benötigen wir, um eine exakte Kollisionserkennung zu garantieren. Das heißt die Kollisionen werden vor dem eigentlichen Kollisionszeitpunkt erkannt. Dadurch erhalten wir eine kontinuierliche Kollisionserkennung und vermeiden eine diskrete Kollisionserkennung (siehe Abbildung~\ref{abb:kollkondis}).
 
 \begin{figure}[h!]
@@ -159,7 +172,7 @@ In diesem Abschnitt werden wir eine mögliche Strategie für die Kollisionserken
 \label{abb:kollision}
 \end{figure}
 
-In diesem Szenario ist zu erkennen, das bei einer paralellen Überprüfung die Kugel $s_1$ eine Kollision mit $s_3$ erkennt. Jedoch $s_3$ eigentlich mit $s_2$ kollidiert und die erkannte Kollision von $s_1$ nicht eintreten wird.  Dieses Problem werden wir nun mit der Timewarp Ridgid Body Simulation von~\cite{timewarp} lösen, wobei diese Version den Allgemeinen Timewarp Algorithmus von~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für parallele diskrete Event Simulation.\\
+In diesem Szenario ist zu erkennen, das bei einer parallelen Überprüfung die Kugel $s_1$ eine Kollision mit $s_3$ erkennt. Jedoch $s_3$ eigentlich mit $s_2$ kollidiert und die erkannte Kollision von $s_1$ nicht eintreten wird.  Dieses Problem werden wir nun mit der Timewarp Ridgid Body Simulation von~\cite{timewarp} lösen, wobei diese Version den Allgemeinen Timewarp Algorithmus von~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für parallele diskrete Event Simulation.\\
 Wir werden uns auf Kugel - Kugel Kollision beschränken, da die Ebene sich nicht bewegt. Das heißt die Kugel - Ebene Kollision ist immer eindeutig und es kann kein Fall wie in Abbildung~\ref{abb:kollision} eintreten. 
 
 \subsection{Ausgangssituation}
@@ -458,6 +471,25 @@ alle Events vor dem L"oschen mit einem NACK beantwortet werden.
 \subsection{Vollst"andiger Ablauf}
 
 \chapter{Fazit}
+Das Ziel, in den drei Wochen des Praktikums eine funktionierende Version des Timwarp Algorithmus auf der GPU zu implementieren,
+wurde erreicht. Allerdings gab es einige Probleme, die es zu l"osen galt. Als erstes sind hier Probleme mit der Maschinengenauigkeit zu nennen.
+Obwohl bereits \emph{double} als Datenetyp gew"ahlt wurde, waren die Zeitpunkte der Kollisionsbestimmung teilweise zu ungenau.
+Dieses Problem tritt vor allem bei sehr geringen Geschwindigkeiten auf, wie an den Formeln im Abschnitt \ref{sec:Kollisionserkennung}, leicht
+erkannt werden kann. Hier wird jeweils durch die Geschwindigkeit geteilt, was bei geringen Geschwindigkeiten zur Verst"arkung von Ungenauingkeiten
+f"uhrt. Dieses Problem konnte eingeschr"ankt werden, indem an geeigneten Stellen Epsilon-Intervalle statt der vermeindlich exakten Zeitpunkte betrachtet
+wurden.
+
+Die Ausf"uhrungsgeschwindigkeit ist wie zu erwarten etwas langsemer als bei der Bachelorarbeit, die als Grundlage diente. Das hat unterschiedliche 
+Gr"unde. Zum einen erlaubte es die Zeit nicht mehr, noch eine Methode zur Raumunterteilung, wie z.B. einen KD-Tree, zu implementieren. Dadurch 
+k"onnte die Kollisionserkennung beschleuningt werden, da dann nicht mehr s"amtliche Paarungen von Kugeln auf Kollision untersucht werden m"ussten.
+Zum Andernen k"onnte das Nachrichtensystem optimiert werden. Aktuell wird beim Verschicken eine lineare Laufzeit pro Thread in Kauf genommen,
+um Schreibkonflikte zu verhindern.
+
+Au\ss erdem leidet die Parallelit"at darunter, dass die einzelnen Threads in den Kernelen teilweise sehr unterschiedliche Abl"aufe haben. Dies
+tritt vor allem im Kernel \emph{handleNextMessages} auf, da die Threads unterschiedliche Nachrichten empfangen und entsprechend unterschiedlich
+reagieren m"ussen.
+
+
 \begin{thebibliography}{10}
 \bibitem{timewarp}
 Brian Mirtich. Timewarp Rigid Body Simulation. MERL - A MITSUBISHI ELECTRIC RESEARCH LABORATORY
@@ -469,6 +501,4 @@ John Koenig. Object-Centric Parallel Rigid Body Simulation With Timewarp. Univer
 David R. Jefferson. Virtual time. ACM Transactions on Programming Languages and Systems, 7(3):404–425, July 1985.
 \end{thebibliography}
 \end{document}
-
-
 
