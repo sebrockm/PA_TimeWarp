@@ -244,9 +244,6 @@ parallel ausgef"uhrt werden. Jeder Thread berechnet dabei den zeitlichen Verlauf
 und neue States erzeugt, anderen Threads Nachrichten schickt und seinerseits Nachrichten von anderen Threads empf"angt
 und darauf reagiert. 
 
-In unserem Fall handelt es sich bei den Objekten ausschlie\ss lich um Kugeln und Ebenen, wobei sich die Ebenen nicht
-bewegen und somit auch keinen eigenen Thread ben"otigen, der ihre Bewegung durch die Szene verwaltet.
-
 In diesem Kapitel wird vorgestellt, wie der Timewarp Algorithmus auf der GPU mittels CUDA implementiert wurde. Dabei wird
 insbesondere auf Probleme eingegangen, die im Zuge der Implementierung aufgetreten sind, wie etwa die Umsetzung des
 Nachrichtensystems oder die Implementierung geeigneter Datenstrukturen, die ohne dynamisch allokierten Speicher
@@ -267,12 +264,12 @@ werden, da es keinen Rollback bis hinter die GVT geben kann.
 Eine Datenstruktur, die diesen Anforderungen gerecht wird, ist eine Double-Ended-Queue, oder kurz "Dequeue". Diese wurde
 nach dem Vorbild der \emph{ArraySchlange} aus der Vorlesung ''Informatik A'' \cite{...} an der Uni Osnabr"ueck
 implementiert. Ihr Vorteil ist, dass sie auf einem Array fester Gr"o\ss e operiert und keinen dynamisch allokierten
-Speicher ben"otigt. Dieser Vorteil ist allerdings zugleich auch ein Nachteil, da Queue sich bei Bedarf nicht ohne
+Speicher ben"otigt. Dieser Vorteil ist allerdings zugleich auch ein Nachteil, da die Queue sich bei Bedarf nicht ohne
 Weiters vergr"o\ss ern kann. Es sei an dieser Stelle allerdings schon darauf hingewiesen, dass keine der eingesetzten
 Dequeues in den Szenarien jemals eine Gr"o\ss e von f"unf "uberschritten hat, sodass eine feste Gr"o\ss e von 20
 gew"ahlt wurde, um einerseits allen Eventualit"aten entgegenzukommen und andererseits nicht zu viel Speicher zu belegen.
 Ein weiterer Vorteil ist, dass auf jedes Element in konstanter Zeit zugegriffen werden kann. Ebenfalls in konstanter
-Zeit kann ein L"osch- oder Einf"ugevorgang am Anfang und am Ende der Dequeue durchgef"uhrt werden.
+Zeit kann eine L"osch- oder Einf"ugeoperation sowohl am Anfang als auch am Ende der Dequeue durchgef"uhrt werden.
 
 \subsection{Heap}
 Da ein Thread mehrere Nachrichten auf einmal bekommen kann, die er dann nach Zeitstempeln sortiert abarbeiten muss,
@@ -383,6 +380,8 @@ Der Rollback ist die zentrale Funktion des Timewarp Algorithmus. Beim Rollback m
 State-Queue ab dem gegebenen Zeitstempel gel"oscht werden. Anschlie\ss end werden alle Antievents der Output-Queue ab
 diesem Zeitstempel verschickt. Dann werden s"amtliche Nachrichten, die noch im Heap stehen, gel"oscht. Dabei m"ussen
 alle Events vor dem L"oschen mit einem NACK beantwortet werden.
+
+\subsection{Vollst"andiger Ablauf}
 
 \chapter{Fazit}
 \begin{thebibliography}{10}
