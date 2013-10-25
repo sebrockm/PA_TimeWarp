@@ -117,12 +117,12 @@ t_{1, 2} = -\frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v 
 \noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei es bei mehreren Lösungen der älteste Zeitpunkt gewählt wird. Natürlich werden Zeitpunkte, die in der Vergangenheit liegen, missachtet. 
 
 \subsection{Kugel - Ebene Kollision}
-Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision. Dafür benötigen wir eine Ebene $e$ und eine Kugel $s$.  Da für die Ebene die Hessenormalform verwendet, reicht es folgende Bedingung 
+Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision. Dafür benötigen wir eine Ebene $e$ und eine Kugel $s$, wobei $s.p$ die Position, $s.r$ der Radius, $s.v$ der Geschwindigkeitsvektor, $e.n$ die Normale und $e.d$ die Richtung sind.  Da für die Ebene die Hessenormalform verwendet, reicht es folgende Bedingung 
 \begin{equation}
-	\langle s.x, e.n \rangle - e.d = s.r
+	\langle s.p + s.v  \cdot t, e.n \rangle - e.d = s.r
 	\label{eq:bedEbeneKugel}
 \end{equation}
-nach $t$ umzuformen. Für die Umformung nach $t$ verwenden wir wieder die Multilinearität. Damit ergibt sich
+zu betrachten. Für die Umformung nach $t$ verwenden wir wieder die Multilinearität. Damit ergibt sich
 \begin{align*}
 (\ref{eq:bedEbeneKugel}) &\Leftrightarrow \langle s.p, e.n \rangle + \langle s.v \cdot t, e.n \rangle - e.d = s.r \\
 &\Leftrightarrow \langle s.p, e.n \rangle + t \cdot \langle s.v, e.n\rangle - e.d = s.r\\
@@ -161,32 +161,39 @@ In diesem Abschnitt werden wir eine mögliche Strategie für die Kollisionserken
 In diesem Szenario ist zu erkennen, das bei einer paralellen Überprüfung die Kugel $s_1$ eine Kollision mit $s_3$ erkennt. Jedoch $s_3$ eigentlich mit $s_2$ kollidiert und die erkannte Kollision von $s_1$ nicht eintreten wird.  Dieses Problem werden wir nun mit der Timewarp Ridgid Body Simulation von~\cite{timewarp} lösen, wobei diese Version den Allgemeinen Timewarp Algorithmus von~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für parallele diskrete Event Simulation.\\
 Wir werden uns auf Kugel - Kugel Kollision beschränken, da die Ebene sich nicht bewegt. Das heißt die Kugel - Ebene Kollision ist immer eindeutig und es kann kein Fall wie in Abbildung~\ref{abb:kollision} eintreten. 
 
-\subsection{Was repräsentiert ein Prozess?}
-Jeder Prozess repräsentiert eine Kugel, wobei dieser eine lokale virtuelle Zeit (LVT) besitzt. Diese LVT wird für die eigentliche Kollisionserkennung verwendet. Falls eine Kollision erkannt und akzeptiert wurde, speichern wir diese mit einem Zeitstempel in der sogenannten $stateQ$. Außerdem wird der LVT auf den Zeitstempel der eigefügten Kollision erhöht. Das Minimum aller LVTs bezeichnen wir als globale virtuelle Zeit (GVT).
+\subsection{Ausgangssituation}
+In unserer Simulation nehmen wir an, dass wir keine verbundenen Objekte haben. Jeder Prozess repräsentiert eine Kugel und hat eine lokale virtuelle Zeit (LVT). Außerdem besitzt jeder Prozess eine $stateQueue$. In dieser Queue werden alle möglichen Kollisionen mit einem Zeitstempel gespeichert.  Außerdem wird die LVT auf den Zeitstempel der eingefügten Kollision erhöht und das minimum alles LVTs bezeichnen wir als globale virtuelle Zeit (GVT). Zur Verifizierung  von Kollisionen und Kommunikation zwischen einzelnen Prozessen werden Nachrichten ausgetauscht, wobei es vier unterschiedliche Arten von Nachrichten gibt:
 
-
-In unseren Simulation nehmen wir an, dass wir keine verbundenen Objekte haben. Jeder Prozess repräsentiert ein Objekt und hat eine lokale virtuelle Zeit (LVT). Außerdem besitzt jedes Objekt eine $stateQueue$. In dieser Queue werden alle möglichen Kollisionen mit einem Zeitstempel gespeichert. Zur Verifizierung und Kommunikation zwischen den einzelnen Objekten werden Events verwendet. Wir benötigen vier Arten von Events:
 \begin{enumerate}
 \item Kollisionskontrolle (EVENT)
-\item Rollback (ANTIEVENT)
+\item nachträgliche Absage (ANTIEVENT)
 \item Bestätigung (ACK)
-\item Absagen (NACK)
+\item Absage (NACK)
 \end{enumerate}
-Diese Event - Nachrichten sind der wesentliche Bestandteil des Algorithmus, da dadurch das Problem aus Abb~\ref{abb:kollision} verhindert wird.
-\subsection{Rollback}
-\subsection{Event}
-\subsection{AntiEvent}
-\subsection{LVT / GVT}
-    % * Timewarp Algorithmus
-    %     ** Rollback
-    %     ** Nachrichtensystem
-    %     ** Kollisionserkennung
-    %     ** Varianten (Hinweis auf Multi Body etc.)
-    %     ** LVT/GVT
 
+\subsection{Nachrichten}
 
+Diese  Nachrichten sind der wesentliche Bestandteil des Algorithmus, da dadurch das Problem aus Abbildung~\ref{abb:kollision} verhindert wird. Wie bereits erwähnt existieren vier Arten von Nachrichten, wobei alle diese Nachrichten mit den notwendigen Zeitstempel der zugehörigen Kollision versehen sind.
 
+\subsubsection*{Kollisionserkennung (EVENT)} 
 
+Nach einer erfolgreichen Erkennung einer Kollision wird eine EVENT - Nachricht an den Prozess des Kollisionspartners geschickt, um
+diesem auf die erkannte Kollision aufmerksam zu machen. Es wird aber noch nicht die Kollision zur $stateQueue$ hinzugefügt, da noch 
+nicht sicher ist, ob die Kollision wirklich stattfindet (siehe Abbildung~\ref{abb:kollision}). 
+\subsubsection*{Bestätigung (ACK)} 
+
+Falls ein Prozess eine EVENT - Nachricht erhält und die Kugelkollision wirklich stattfindet, dann wird eine ACK - Nachricht versendet. Damit wird der Kollisionspartner informiert, so dass dieser die Kollision zu seiner $stateQueue$ hinzufügen kann. Außerdem wird die Kollision in der eigenen $stateQueue$ hinzugefügt.
+
+\subsubsection*{Absage (NACK)} 
+
+Falls ein Prozess eine EVENT - Nachricht erhält und die Kugelkollision nicht stattfindet, dann wird eine NACK - Nachricht versendet. Damit wird der Kollisionspartner informiert, so dass dieser die zuvor erkannte Kollision verwerfen kann.
+
+\subsubsection*{nachträgliche Absage (ANTIEVENT)} 
+
+Falls ein Prozess eine EVENT - Nachricht erhält, wo der Zeitstempel kleiner ist als schon eingefügte Nachrichten, dann müssen die zuvor akzeptierten Nachrichten rückgängig gemacht werden, das heißt wir führen einen Rollback aus. Dann verschickt dieser Prozess an alle zu löschenden Kollisionspartner eine ANTIEVENT - Nachricht, wobei diese Prozesse wiederum alle Zustände löschen müssen, die größer sind als der Zeitstempel der ANTIEVENT - Nachricht. 
+
+\subsection{Algorithmus Ablauf}
+Wir werden nun den Ablauf des Algorithmus anhand eines Beispiels erläutern.
 
 \chapter{Timewarp Algorithmus auf der GPU}
 Der in Abschnitt \ref{sec:TimewarpAlgoritmus} vorgestellte Timewarp Algorithmus kann theoretisch von beliebig vielen Threads
