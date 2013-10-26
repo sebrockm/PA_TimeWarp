@@ -1,2 +1,2 @@
-default:
+default: 
 	latexmk timewarp.tex -pdf
