@@ -49,7 +49,7 @@ und John Koenig \cite{timewarp-cpu}.
 
 Die kontinuierliche Kollisionserkennung unterscheidet sich dadurch von der diskreten, dass Kollisionen bereits im
 Voraus berechnet werden, um so den exakten Kollsionspunkt zu bestimmen. Bei der diskreten Variante hingegen wird eine Kollision erst dadurch erkannt,
-dass sich die Objetkte bereits "uberschneiden. Sie stellt also nur ein grobe N"aherung der Realit"at dar.
+dass sich die Objetkte bereits "uberschneiden. Sie stellt also nur eine grobe N"aherung der Realit"at dar.
 
 Zun"achst werden wir im ersten Kapitel die Grundlagen erl"autern und den f"ur unsere Zwecke abgewandelten Timewarp Algorithmus vorstellen.
 Daraufhin wird im zweiten Kapitel auf die parallele Implementierung eingegangen.
@@ -76,7 +76,7 @@ Objekttyp abhängig sind.
 
 \section{Kollisionserkennung}
 \label{sec:Kollisionserkennung}
-Die Berechnung des exakten Zeitpunktes benötigen wir, um eine exakte Kollisionserkennung zu garantieren. Das heißt die Kollisionen werden vor dem eigentlichen Kollisionszeitpunkt erkannt. Dadurch erhalten wir eine kontinuierliche Kollisionserkennung und vermeiden eine diskrete Kollisionserkennung (siehe Abbildung~\ref{abb:kollkondis}).
+Die Berechnung des exakten Zeitpunktes benötigen wir, um eine genaue Kollisionserkennung zu garantieren. Das heißt die Kollisionen werden vor dem eigentlichen Kollisionszeitpunkt erkannt. Dadurch erhalten wir eine kontinuierliche Kollisionserkennung und vermeiden eine diskrete Kollisionserkennung (siehe Abbildung~\ref{abb:kollkondis}).
 
 \begin{figure}[h!]
 \centering\begin{tikzpicture}
@@ -96,20 +96,20 @@ Die Berechnung des exakten Zeitpunktes benötigen wir, um eine exakte Kollisions
 \end{figure}
 
 Da wir uns auf den Objekttypen Kugel und Ebene beschränkten, reicht es für 2 mögliche Arten von Kollisionen 
-(Kugel - Kugel und Kugel - Ebene) eine Formel herzuleiten.\\
+(Kugel - Kugel und Kugel - Ebene) Formeln herzuleiten.\\
 
 \subsection{Kugel - Kugel Kollision}
 \noindent Zunächst konzentrieren wir uns auf die Kugel - Kugel Kollision. Dafür benötigen wir die 2 Kugeln 
-$s_1$ und $s_2$ zu einem gleichen Zeitpunkt, mit den Radien $s_1.r$ und $s_2.r$, den Geschwindigkeitsvektoren
+$s_1$ und $s_2$ zum gleichen Zeitpunkt, mit den Radien $s_1.r$ und $s_2.r$, den Geschwindigkeitsvektoren
 $s_1.v$ und $s_2.v$ und die Positionen $s_1.p$ und $s_2.p$. Wir verwenden für die Abstandsberechnung die
-Euklidnorm, da die Objekte sich im $\mathbb{R}^{3}$ befinden. Eine Kugel kollidiert mit einer anderen
+euklidische Norm, da die Objekte sich im $\mathbb{R}^{3}$ befinden. Eine Kugel kollidiert mit einer anderen
 Kugel, wenn 
 \begin{equation}
     \label{eq:KugelKugelBed}
     \|s_1.p + s_1.v \cdot t - s_2.p - s_2.v \cdot t \|_{2} = s_1.r + s_2.r
 \end{equation}
 gilt, da der Abstand immer vom Zentrum der Kugel gemessen wird.
-Die Bedingung~\ref{eq:KugelKugelBed} können wir nun weiter vereinfachen, indem wir mit der Multilinearität des Skalarprodukts verwenden. Damit erhalten wir die Formel 
+Die Bedingung~\ref{eq:KugelKugelBed} können wir nun weiter vereinfachen, indem wir die Multilinearität des Skalarprodukts verwenden. Damit erhalten wir die Formel 
 \begin{align*}
 (\ref{eq:KugelKugelBed})  &\Leftrightarrow \|\underbrace{s_1.p - s_2.p}_{=: s_{12}.p} + t (\underbrace{s_1.v - s_2.v}_{:=s_{12}v})\|_{2}  = s_1.r + s_2.r\\
 &\Leftrightarrow \langle s_{12}.p + t \cdot s_{12}.v, s_{12}.p + t \cdot s_{12}.v\rangle = (s_1.r + s_2.r)^{2}\\
@@ -128,7 +128,10 @@ $\langle s_{12}.v, s_{12}.v \rangle = 0$ und $\langle s_{12}.p, s_{12}.v\rangle 
 t_{1, 2} = -\frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \pm \sqrt{ \left( \frac{\langle s_{12}.p, s_{12}.v\rangle}{\langle s_{12}.v, s_{12}.v \rangle} \right)^{2} + \frac{(s_{1}.r + s_{2}.r)^{2} + \langle s_{12}.p, s_{12}.p\rangle}{\langle s_{12}.v, s_{12}.v \rangle}}\text{.}
 \end{equation*}
 
-\noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei es bei mehreren Lösungen der älteste Zeitpunkt gewählt wird. Natürlich werden Zeitpunkte, die in der Vergangenheit liegen, missachtet. 
+\noindent Damit können wir nun den Zeitpunkt der Kollision berechnen, wobei wir bei mehreren Lösungen den ältesten Zeitpunkt wählen. Natürlich werden Zeitpunkte, die in der Vergangenheit liegen, missachtet. 
+Außerdem ist zu erkennen, dass durch die Additionen Ungenauigkeiten entstehen. Diese werden wiederum
+durch die Division von geringen Geschwindigkeiten stark vergrößert. Deshalb macht es in diesem
+Fall Sinn ein $\epsilon$-Intervall zu betrachten, um mögliche ungenaue Zeitpunkte einzugrenzen.
 
 \subsection{Kugel - Ebene Kollision}
 Jetzt bestimmen wir die Formel für die Ebene-Kugel Kollision. Dafür benötigen wir eine Ebene $e$ und eine Kugel $s$, wobei $s.p$ die Position, $s.r$ der Radius, $s.v$ der Geschwindigkeitsvektor, $e.n$ die Normale und $e.d$ die Richtung sind.  Da für die Ebene die Hessenormalform verwendet, reicht es folgende Bedingung 
@@ -142,9 +145,13 @@ zu betrachten. Für die Umformung nach $t$ verwenden wir wieder die Multilineari
 &\Leftrightarrow \langle s.p, e.n \rangle + t \cdot \langle s.v, e.n\rangle - e.d = s.r\\
 &\Leftrightarrow t = \frac{s.r + e.d - \langle s.p, e.n \rangle}{ \langle s.v, s.n \rangle}\text{.}
 \end{align*}
+
+Natürlich können hier auch wieder Ungenauigkeiten durch die Additionen entstehen, die wiederum
+durch die Divisionen stark verstärkt werden können. Also wird hier, wie bei der Kugel - Kugel
+Kollision, durch die Verwendung eines $\epsilon$-Intervall die Ungenauigkeiten eingegrenzt.
+
 \section{Timwarp Algorithmus}
 \label{sec:TimewarpAlgoritmus}
-
 In diesem Abschnitt werden wir eine mögliche Strategie für die Kollisionserkennung vorstellen. Natürlich  stellt sich
 die Frage, warum wir nicht einen naiven Ansatz für Kollisionserkennung verwenden. Das Problem ist, dass mit einem naiven Ansatz die Situation von Abbildung~\ref{abb:kollision} eintreten kann.
 
@@ -173,8 +180,8 @@ die Frage, warum wir nicht einen naiven Ansatz für Kollisionserkennung verwende
 \label{abb:kollision}
 \end{figure}
 
-In diesem Szenario ist zu erkennen, dass bei einer parallelen Überprüfung die Kugel $s_1$ eine Kollision mit $s_3$ erkennt. Jedoch $s_3$ eigentlich mit $s_2$ kollidiert und die erkannte Kollision von $s_1$ nicht eintreten wird.  Dieses Problem werden wir nun mit der Timewarp Ridgid Body Simulation von~\cite{timewarp} lösen, wobei diese Version den Allgemeinen Timewarp Algorithmus von~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für parallele diskrete Event Simulation.\\
-Wir werden uns auf Kugel - Kugel Kollision beschränken, da die Ebene sich nicht bewegt. Das heißt die Kugel - Ebene Kollision ist immer eindeutig und es kann kein Fall wie in Abbildung~\ref{abb:kollision} eintreten. 
+In diesem Szenario ist zu erkennen, dass bei einer parallelen Überprüfung die Kugel $s_1$ eine Kollision mit $s_3$ erkennt. Jedoch $s_3$ eigentlich mit $s_2$ kollidiert und die erkannte Kollision von $s_1$ nicht eintreten wird.  Dieses Problem werden wir nun mit der Timewarp Ridgid Body Simulation von~\cite{timewarp} lösen, wobei diese Version den Allgemeinen Timewarp Algorithmus von~\cite{jefferson} verwendet. Dieser allgemeine Algorithmus ist eine mögliche Strategie für eine parallele diskrete Event Simulation.\\
+Wir werden uns auf die Kugel - Kugel Kollision beschränken, da die Ebene sich nicht bewegt. Das heißt die Kugel - Ebene Kollision ist immer eindeutig und es kann kein Fall wie in Abbildung~\ref{abb:kollision} eintreten. 
 
 \subsection{Ausgangssituation}
 In unserer Simulation nehmen wir an, dass wir keine verbundenen Objekte haben. Jeder Prozess repräsentiert eine Kugel und hat eine lokale virtuelle Zeit (LVT). Außerdem besitzt jeder Prozess eine $stateQueue$. In dieser Queue werden alle möglichen Kollisionen mit einem Zeitstempel gespeichert.  Außerdem wird die LVT auf den Zeitstempel der eingefügten Kollision erhöht und das Minimum aller LVTs bezeichnen wir als globale virtuelle Zeit (GVT). Zur Verifizierung  von Kollisionen und Kommunikation zwischen einzelnen Prozessen werden Nachrichten ausgetauscht, wobei es vier unterschiedliche Arten von Nachrichten gibt:
@@ -241,7 +248,7 @@ Wir werden nun den Ablauf des Algorithmus anhand eines Beispiels erläutern. Im 
 \label{abb:bsp1}
 \end{figure}
 
-In der Abbildung~\ref{abb:bsp1} ist die Anfangssituation und die erste Kollisionsbehandlung zu erkennen. Zu Beginn werden die vier Initialisierungspositonen eingefügt. Daraufhin startet die Kollisionserkennung. Das heißt C bemerkt eine Kollision mit D und A eine Kollision mit B. Daraufhin informieren sich die Prozess gegenseitig mit einer EVENT - Nachricht. Diese wird dann von den jeweiligen Prozessen überprüft und schließlich akzeptiert.
+In der Abbildung~\ref{abb:bsp1} ist die Anfangssituation und die erste Kollisionsbehandlung zu erkennen. Zu Beginn werden die vier Initialisierungspositonen eingefügt. Daraufhin startet die Kollisionserkennung. Das heißt C bemerkt eine Kollision mit D und A eine Kollision mit B. Daraufhin informieren sich die Prozesse gegenseitig mit einer EVENT - Nachricht. Diese wird dann von den jeweiligen Prozessen überprüft und schließlich akzeptiert.
 \begin{figure}[htbp]
   \centering
   \subfigure[Algorithmus Beispiel 2]{
@@ -325,7 +332,7 @@ Die Abbildung~\ref{abb:bsp2} repräsentiert den Grundgedanken des Algorithmus. I
 mit C den Effekt gehabt, dass eine weitere Kollision mit B stattfindet. Jedoch findet diese Kollision mit B vor der zuvor erkannten Kollision B - A statt, das heißt diese Kollision wird nachträglich gelöscht (Rollback). Also verschickt B eine ANTIEVENT - Nachricht an A. 
 
 
-Falls keine weiteren Kollisionen (siehe Abbildung~\ref{abb:bsp3} bis zu einem bestimmten Zeitpunkt stattfinden, werden die Zustände zu diesem Zeitpunkt erzeugt. Dies hat zusätzlich den Effekt, dass der GVT auch mit verschoben wird.
+Falls keine weiteren Kollisionen (siehe Abbildung~\ref{abb:bsp3}) bis zu einem bestimmten Zeitpunkt stattfinden, werden die Zustände zu diesem Zeitpunkt erzeugt. Dies hat zusätzlich den Effekt, dass der GVT auch mit verschoben wird.
 
 \chapter[Timewarp Algorithmus auf der GPU - S. Brockmeyer]{Timewarp Algorithmus auf der GPU}
 Der in Abschnitt \ref{sec:TimewarpAlgoritmus} vorgestellte Timewarp Algorithmus kann theoretisch von beliebig vielen
@@ -501,16 +508,16 @@ Zust"ande werden in \emph{deleteOlderThanGVT} gel"oscht.
 \chapter{Fazit}
 Das Ziel, in den drei Wochen des Praktikums eine funktionierende Version des Timwarp Algorithmus auf der GPU zu implementieren,
 wurde erreicht. Allerdings gab es einige Probleme, die es zu l"osen galt. Als erstes sind hier Probleme mit der Maschinengenauigkeit zu nennen.
-Obwohl bereits \emph{double} als Datenetyp gew"ahlt wurde, waren die Zeitpunkte der Kollisionsbestimmung teilweise zu ungenau.
+Obwohl bereits \emph{double} als Datentyp gew"ahlt wurde, waren die Zeitpunkte der Kollisionsbestimmung teilweise zu ungenau.
 Dieses Problem tritt vor allem bei sehr geringen Geschwindigkeiten auf, wie an den Formeln im Abschnitt \ref{sec:Kollisionserkennung}, leicht
-erkannt werden kann. Hier wird jeweils durch die Geschwindigkeit geteilt, was bei geringen Geschwindigkeiten zur Verst"arkung von Ungenauingkeiten
-f"uhrt. Dieses Problem konnte eingeschr"ankt werden, indem an geeigneten Stellen Epsilon-Intervalle statt der vermeindlich exakten Zeitpunkte betrachtet
+erkannt werden kann. Hier wird jeweils durch die Geschwindigkeit geteilt, was bei geringen Geschwindigkeiten zur Verst"arkung von Ungenauigkeiten
+f"uhrt. Dieses Problem konnte eingeschr"ankt werden, indem an geeigneten Stellen $\epsilon$-Intervalle statt der vermeindlich exakten Zeitpunkte betrachtet
 wurden.
 
-Die Ausf"uhrungsgeschwindigkeit ist wie zu erwarten etwas langsemer als bei der Bachelorarbeit \cite{bachelor}, die als Grundlage diente. Das hat unterschiedliche 
+Die Ausf"uhrungsgeschwindigkeit ist wie zu erwarten etwas langsamer als bei der Bachelorarbeit \cite{bachelor}, die als Grundlage diente. Das hat unterschiedliche 
 Gr"unde. Zum einen erlaubte es die Zeit nicht mehr, noch eine Methode zur Raumunterteilung, wie z.B. einen KD-Tree, zu implementieren. Dadurch 
 k"onnte die Kollisionserkennung beschleuningt werden, da dann nicht mehr s"amtliche Paarungen von Kugeln auf Kollision untersucht werden m"ussten.
-Zum Andernen k"onnte das Nachrichtensystem optimiert werden. Aktuell wird beim Verschicken eine lineare Laufzeit pro Thread in Kauf genommen,
+Zum Anderen k"onnte das Nachrichtensystem optimiert werden. Aktuell wird beim Verschicken eine lineare Laufzeit pro Thread in Kauf genommen,
 um Schreibkonflikte zu verhindern.
 
 Au\ss erdem leidet die Parallelit"at darunter, dass die einzelnen Threads in den Kernelen teilweise sehr unterschiedliche Abl"aufe haben. Dies
